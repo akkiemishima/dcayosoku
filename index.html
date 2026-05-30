@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>あっきーの『実績から将来予測』ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream: #fdf8f3;
+  --cream2: #f7f0e8;
+  --cream3: #efe5d8;
+  --coral: #e8816a;
+  --coral-light: #f5c4b8;
+  --coral-pale: #fdf0ec;
+  --mint: #5ba89a;
+  --mint-light: #a8d5ce;
+  --mint-pale: #eef7f5;
+  --gold: #c9963a;
+  --gold-pale: #fdf3e3;
+  --text: #3d2c2c;
+  --text2: #7a6060;
+  --text3: #b09a9a;
+  --shadow: rgba(180,120,100,0.12);
+  --shadow2: rgba(180,120,100,0.22);
+  --radius: 20px;
+  --radius-sm: 12px;
+}
+body {
+  font-family: 'Zen Maru Gothic', 'Hiragino Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 0 5rem;
+  background-image: radial-gradient(circle at 20% 20%, rgba(232,129,106,0.06) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(91,168,154,0.06) 0%, transparent 50%);
+}
+
+.page-header {
+  background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
+  color: #fff;
+  padding: 2.5rem 1.5rem 2rem;
+  text-align: center;
+}
+.page-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.page-header p { font-size: 13px; opacity: 0.88; line-height: 1.7; }
+
+.container { max-width: 520px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.6rem 1.4rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 4px 24px var(--shadow);
+}
+.card-title {
+  font-size: 15px; font-weight: 700; color: var(--text);
+  margin-bottom: 1.2rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title .icon { font-size: 20px; }
+
+/* コントロール */
+.ctrl-card {
+  background: var(--cream);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.8rem;
+}
+.ctrl-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.5rem;
+}
+.ctrl-name { font-size: 13px; color: var(--text2); font-weight: 500; }
+.ctrl-val {
+  font-size: 16px; font-weight: 700;
+  padding: 3px 10px; border-radius: 8px;
+}
+.ctrl-range {
+  display: flex; align-items: center; gap: 8px;
+}
+.ctrl-range-label { font-size: 11px; color: var(--text3); white-space: nowrap; }
+input[type=range] {
+  flex: 1; height: 4px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background: var(--cream3); border-radius: 2px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--coral); cursor: pointer;
+  box-shadow: 0 2px 6px rgba(232,129,106,0.4);
+}
+
+/* 手入力 */
+.manual-input-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--cream);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.8rem;
+}
+.manual-input-wrap .ctrl-name { font-size: 13px; color: var(--text2); font-weight: 500; white-space: nowrap; }
+.manual-input {
+  flex: 1; border: 2px solid var(--cream3); border-radius: 10px;
+  padding: 8px 12px; font-size: 16px; font-weight: 700;
+  font-family: inherit; color: var(--text); background: #fff;
+  text-align: right; outline: none; transition: border-color 0.2s;
+  max-width: 160px;
+}
+.manual-input:focus { border-color: var(--coral); }
+.manual-unit { font-size: 13px; color: var(--text2); }
+
+/* IRR結果バッジ */
+.irr-result {
+  background: var(--mint-pale);
+  border: 2px solid var(--mint-light);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.8rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.irr-result-label { font-size: 13px; color: var(--mint); font-weight: 700; }
+.irr-result-val { font-size: 22px; font-weight: 700; color: var(--mint); }
+.irr-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* 将来価値結果 */
+.fv-result {
+  background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
+  border-radius: var(--radius);
+  padding: 1.8rem 1.4rem;
+  text-align: center;
+  color: #fff;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 6px 28px rgba(232,129,106,0.35);
+}
+.fv-label { font-size: 13px; opacity: 0.88; margin-bottom: 6px; }
+.fv-val { font-size: 40px; font-weight: 700; line-height: 1.1; margin-bottom: 6px; }
+.fv-sub { font-size: 12px; opacity: 0.82; }
+
+/* グラフ */
+.chart-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.2rem 1rem 1rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 4px 24px var(--shadow);
+}
+.chart-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 0.8rem; }
+.chart-wrap { height: 200px; position: relative; }
+
+/* 内訳バー */
+.ratio-bar-wrap { margin: 0.8rem 0 0.4rem; }
+.ratio-bar {
+  height: 10px; border-radius: 5px; background: var(--cream3);
+  overflow: hidden; display: flex;
+}
+.ratio-bar-p { background: var(--mint); height: 100%; transition: width 0.6s; }
+.ratio-bar-g { background: var(--gold); height: 100%; transition: width 0.6s; }
+.ratio-labels {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--text3); margin-top: 4px;
+}
+
+/* 注記 */
+.note {
+  font-size: 11px; color: var(--text3); line-height: 1.7;
+  padding: 0 0.2rem;
+}
+.note a { color: var(--mint); }
+
+/* 比較セクション */
+.compare-row {
+  display: flex; gap: 8px; margin-bottom: 0.6rem;
+}
+.compare-box {
+  flex: 1; background: var(--cream); border-radius: var(--radius-sm);
+  padding: 0.8rem; text-align: center;
+}
+.compare-box.highlight { background: var(--mint-pale); border: 2px solid var(--mint-light); }
+.compare-box-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
+.compare-box-val { font-size: 16px; font-weight: 700; color: var(--text); }
+.compare-box.highlight .compare-box-val { color: var(--mint); }
+
+/* アコーディオン */
+.accordion-btn {
+  width: 100%; padding: 10px 14px; background: var(--cream2);
+  border: none; border-radius: var(--radius-sm); font-family: inherit;
+  font-size: 12px; color: var(--text2); cursor: pointer; text-align: left;
+  font-weight: 700; margin-top: 0.4rem;
+}
+.accordion-content {
+  display: none; padding: 12px 14px; font-size: 11px;
+  color: var(--text2); line-height: 1.9; background: var(--cream);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+/* パスワード */
+.pw-overlay {
+  position: fixed; inset: 0;
+  background: rgba(253,248,243,0.82);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+  padding: 20px;
+  overflow: hidden;
+}
+.pw-illustration {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; opacity: 0.45; pointer-events: none;
+}
+.pw-box {
+  background: rgba(255,255,255,0.97); border-radius: var(--radius);
+  padding: 2.5rem 2rem; width: 100%; max-width: 360px; text-align: center;
+  box-shadow: 0 8px 48px rgba(180,120,100,0.28);
+  animation: slideDown 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.pw-logo { font-size: 36px; margin-bottom: 12px; }
+.pw-box h2 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.pw-box p { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; line-height: 1.7; }
+.pw-input {
+  width: 100%; padding: 12px 16px; font-size: 15px; font-family: inherit;
+  border: 2px solid var(--cream3); border-radius: var(--radius-sm);
+  background: var(--cream); color: var(--text); outline: none; margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.pw-input:focus { border-color: var(--coral); }
+.pw-btn {
+  width: 100%; padding: 14px; font-size: 15px; font-family: inherit; font-weight: 700;
+  background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
+  color: #fff; border: none; border-radius: var(--radius-sm);
+  cursor: pointer; box-shadow: 0 4px 16px rgba(232,129,106,0.4);
+  transition: opacity 0.2s;
+}
+.pw-btn:hover { opacity: 0.9; }
+.pw-error { font-size: 12px; color: var(--coral); margin-top: 10px; min-height: 18px; font-weight: 700; }
+.pw-note {
+  margin-top:14px;font-size:11px;color:var(--text2);
+  background:var(--cream2);border-radius:8px;padding:10px 12px;
+  text-align:left;line-height:1.8;
+}
+.profile-bar {
+  background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
+  color: #fff; padding: 10px 1.2rem;
+  display: flex; align-items: center; gap: 12px;
+  max-width: 640px; margin: 0 auto;
+}
+.profile-bar-avatar { font-size: 28px; flex-shrink: 0; }
+.profile-bar-text { flex: 1; }
+.profile-bar-name { font-size: 14px; font-weight: 700; }
+.profile-bar-desc { font-size: 11px; opacity: 0.88; line-height: 1.6; }
+.profile-bar-link {
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: rgba(255,255,255,0.22); border-radius: 20px;
+  padding: 4px 12px; white-space: nowrap; text-decoration: none;
+  flex-shrink: 0;
+}
+.profile-bar-link:hover { background: rgba(255,255,255,0.35); }
+
+
+</style>
+</head>
+<body>
+<div class="pw-overlay" id="pw-overlay" style="display:none;">
+  <div class="pw-illustration"><svg width="100%" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#fff8f3" width="680" height="420"/>
+<ellipse cx="120" cy="100" rx="55" ry="32" fill="#fdeee8"/><ellipse cx="150" cy="90" rx="40" ry="28" fill="#fdeee8"/><ellipse cx="90" cy="105" rx="35" ry="22" fill="#fdeee8"/>
+<ellipse cx="540" cy="80" rx="45" ry="26" fill="#fdeee8"/><ellipse cx="568" cy="70" rx="34" ry="22" fill="#fdeee8"/><ellipse cx="515" cy="84" rx="30" ry="18" fill="#fdeee8"/>
+<circle cx="620" cy="55" r="30" fill="#f5c97a"/>
+<line x1="620" y1="14" x2="620" y2="6" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"/>
+<line x1="620" y1="96" x2="620" y2="104" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"/>
+<line x1="579" y1="55" x2="571" y2="55" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"/>
+<line x1="661" y1="55" x2="669" y2="55" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"/>
+<line x1="591" y1="26" x2="585" y2="20" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"/>
+<line x1="649" y1="84" x2="655" y2="90" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"/>
+<line x1="649" y1="26" x2="655" y2="20" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"/>
+<line x1="591" y1="84" x2="585" y2="90" stroke="#f5c97a" stroke-width="3" stroke-linecap="round"/>
+<path d="M0 320 Q170 280 340 300 Q510 320 680 295 L680 420 L0 420 Z" fill="#c9e0b0"/>
+<path d="M0 350 Q170 330 340 340 Q510 350 680 335 L680 420 L0 420 Z" fill="#d4e8c2"/>
+<path d="M0 380 L680 380 L680 420 L0 420 Z" fill="#b8d9a0"/>
+<path d="M76 338 Q78 290 80 260 Q82 290 84 338 Z" fill="#b88a5a"/>
+<ellipse cx="72" cy="255" rx="14" ry="11" fill="#8bcc8a"/><ellipse cx="88" cy="248" rx="14" ry="11" fill="#8bcc8a"/>
+<ellipse cx="80" cy="240" rx="16" ry="12" fill="#7bc47a"/>
+<circle cx="60" cy="342" r="10" fill="#c5dca0"/><rect x="55" y="340" width="10" height="8" fill="#c5dca0"/>
+<rect x="178" y="218" width="14" height="110" rx="4" fill="#a0724a"/>
+<ellipse cx="185" cy="185" rx="40" ry="34" fill="#5ba89a"/>
+<ellipse cx="165" cy="200" rx="30" ry="26" fill="#4a9488"/>
+<ellipse cx="208" cy="196" rx="30" ry="26" fill="#4a9488"/>
+<ellipse cx="185" cy="165" rx="32" ry="28" fill="#3d8074"/>
+<ellipse cx="185" cy="175" rx="22" ry="20" fill="#3d8074"/>
+<ellipse cx="172" cy="212" rx="7" ry="9" fill="#c99830"/><ellipse cx="172" cy="208" rx="7" ry="9" fill="#e8b84b"/><ellipse cx="172" cy="207" rx="7" ry="3" fill="#f0cc70"/>
+<text x="172" y="210" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="10" font-weight="700" fill="#7a5a2a">&#165;</text>
+<ellipse cx="198" cy="218" rx="7" ry="9" fill="#c99830"/><ellipse cx="198" cy="214" rx="7" ry="9" fill="#e8b84b"/><ellipse cx="198" cy="213" rx="7" ry="3" fill="#f0cc70"/>
+<text x="198" y="216" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="10" font-weight="700" fill="#7a5a2a">&#165;</text>
+<rect x="345" y="155" width="20" height="175" rx="5" fill="#a0724a"/>
+<ellipse cx="355" cy="115" rx="72" ry="58" fill="#5ba89a"/>
+<ellipse cx="315" cy="135" rx="55" ry="46" fill="#4a9488"/>
+<ellipse cx="395" cy="130" rx="55" ry="46" fill="#4a9488"/>
+<ellipse cx="355" cy="85" rx="60" ry="52" fill="#3d8074"/>
+<ellipse cx="355" cy="100" rx="44" ry="40" fill="#3d8074"/>
+<ellipse cx="330" cy="158" rx="11" ry="14" fill="#c99830"/><ellipse cx="330" cy="150" rx="11" ry="14" fill="#e8b84b"/><ellipse cx="330" cy="149" rx="11" ry="5" fill="#f0cc70"/>
+<text x="330" y="154" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#7a5a2a">&#165;</text>
+<ellipse cx="376" cy="163" rx="11" ry="14" fill="#c99830"/><ellipse cx="376" cy="155" rx="11" ry="14" fill="#e8b84b"/><ellipse cx="376" cy="154" rx="11" ry="5" fill="#f0cc70"/>
+<text x="376" y="159" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#7a5a2a">&#165;</text>
+<ellipse cx="310" cy="188" rx="9" ry="11" fill="#c99830"/><ellipse cx="310" cy="182" rx="9" ry="11" fill="#e8b84b"/><ellipse cx="310" cy="181" rx="9" ry="4" fill="#f0cc70"/>
+<text x="310" y="185" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="10" font-weight="700" fill="#7a5a2a">&#165;</text>
+<ellipse cx="398" cy="180" rx="9" ry="11" fill="#c99830"/><ellipse cx="398" cy="174" rx="9" ry="11" fill="#e8b84b"/><ellipse cx="398" cy="173" rx="9" ry="4" fill="#f0cc70"/>
+<text x="398" y="177" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="10" font-weight="700" fill="#7a5a2a">&#165;</text>
+<rect x="526" y="88" width="28" height="232" rx="6" fill="#a0724a"/>
+<ellipse cx="540" cy="40" rx="96" ry="76" fill="#5ba89a"/>
+<ellipse cx="488" cy="68" rx="72" ry="60" fill="#4a9488"/>
+<ellipse cx="592" cy="62" rx="72" ry="60" fill="#4a9488"/>
+<ellipse cx="540" cy="10" rx="80" ry="68" fill="#3d8074"/>
+<ellipse cx="540" cy="28" rx="60" ry="54" fill="#3d8074"/>
+<ellipse cx="502" cy="100" rx="14" ry="18" fill="#c99830"/><ellipse cx="502" cy="88" rx="14" ry="18" fill="#e8b84b"/><ellipse cx="502" cy="87" rx="14" ry="6" fill="#f0cc70"/>
+<text x="502" y="93" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="14" font-weight="700" fill="#7a5a2a">&#165;</text>
+<ellipse cx="576" cy="106" rx="14" ry="18" fill="#c99830"/><ellipse cx="576" cy="94" rx="14" ry="18" fill="#e8b84b"/><ellipse cx="576" cy="93" rx="14" ry="6" fill="#f0cc70"/>
+<text x="576" y="99" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="14" font-weight="700" fill="#7a5a2a">&#165;</text>
+<ellipse cx="486" cy="135" rx="11" ry="14" fill="#c99830"/><ellipse cx="486" cy="125" rx="11" ry="14" fill="#e8b84b"/><ellipse cx="486" cy="124" rx="11" ry="5" fill="#f0cc70"/>
+<text x="486" y="129" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#7a5a2a">&#165;</text>
+<ellipse cx="594" cy="128" rx="11" ry="14" fill="#c99830"/><ellipse cx="594" cy="118" rx="11" ry="14" fill="#e8b84b"/><ellipse cx="594" cy="117" rx="11" ry="5" fill="#f0cc70"/>
+<text x="594" y="122" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#7a5a2a">&#165;</text>
+<ellipse cx="540" cy="98" rx="11" ry="14" fill="#c99830"/><ellipse cx="540" cy="88" rx="11" ry="14" fill="#e8b84b"/><ellipse cx="540" cy="87" rx="11" ry="5" fill="#f0cc70"/>
+<text x="540" y="92" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#7a5a2a">&#165;</text>
+<defs><marker id="ah1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#e8816a" stroke-width="2" stroke-linecap="round"/></marker></defs>
+<path d="M112 305 Q145 275 170 290" fill="none" stroke="#e8816a" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="5,4" marker-end="url(#ah1)"/>
+<path d="M245 285 Q295 260 325 278" fill="none" stroke="#e8816a" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="5,4" marker-end="url(#ah1)"/>
+<path d="M430 265 Q470 248 500 260" fill="none" stroke="#e8816a" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="5,4" marker-end="url(#ah1)"/>
+<rect x="34" y="348" width="80" height="36" rx="8" fill="#fff5f0" opacity="0.92"/>
+<text x="74" y="362" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#c96b4a">毎月コツコツ</text>
+<text x="74" y="376" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="11" fill="#9a7070">はじめの一歩</text>
+<rect x="137" y="338" width="80" height="36" rx="8" fill="#fff5f0" opacity="0.92"/>
+<text x="177" y="352" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#c96b4a">数年後</text>
+<text x="177" y="366" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="11" fill="#9a7070">少しずつ育つ</text>
+<rect x="302" y="318" width="104" height="36" rx="8" fill="#fff5f0" opacity="0.92"/>
+<text x="354" y="332" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#c96b4a">10〜20年後</text>
+<text x="354" y="346" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="11" fill="#9a7070">複利が加速する</text>
+<rect x="474" y="298" width="130" height="36" rx="8" fill="#fff5f0" opacity="0.92"/>
+<text x="539" y="312" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="12" font-weight="700" fill="#c96b4a">長期運用後</text>
+<text x="539" y="326" text-anchor="middle" font-family="Hiragino Sans,sans-serif" font-size="11" fill="#9a7070">大きな実りに</text>
+<path d="M220 145 Q230 135 240 140" fill="none" stroke="#c96b4a" stroke-width="2" stroke-linecap="round"/>
+<path d="M225 140 Q230 132 235 137" fill="none" stroke="#c96b4a" stroke-width="2" stroke-linecap="round"/>
+<path d="M450 50 Q462 40 474 46" fill="none" stroke="#c96b4a" stroke-width="2" stroke-linecap="round"/>
+<path d="M456 45 Q462 37 468 42" fill="none" stroke="#c96b4a" stroke-width="2" stroke-linecap="round"/>
+</svg></div>
+  <div class="pw-box">
+    <div class="pw-logo">💴</div>
+    <h2>あっきーの<br>『実績から将来予測』ツール</h2>
+    <p>ご利用にはパスワードが必要です。<br>パスワードを入力してください。</p>
+    <input class="pw-input" type="password" id="pw-input" placeholder="パスワード" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="pw-btn" onclick="checkPw()">はじめる</button>
+    <div class="pw-error" id="pw-error"></div>
+    <div class="pw-note">
+      🔑 パスワードはあっきーのnote記事で公開しています。<br>
+      無料で読めます →
+      <a href="https://note.com/akkiemishima/n/n55d20f53d94b" target="_blank" rel="noopener noreferrer" style="color:var(--coral);font-weight:700;text-decoration:underline;">パスワードを取得する</a>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="page-header">
+  <h1>📈 実績から将来予測</h1>
+  <p>過去の積立実績を入力すると<br>IRR（内部収益率）で利回りを計算し<br>同じ利回りが続く場合の将来価値を表示します</p>
+</div>
+<!-- プロフィールバー -->
+<div class="profile-bar">
+  <div class="profile-bar-avatar">🌱</div>
+  <div class="profile-bar-text">
+    <div class="profile-bar-name">あっきー（三嶋義明）</div>
+    <div class="profile-bar-desc">計算オタク。なんでも計算してみないと気が済まない性格。『難しいお金の話も、優しく、易しく』をモットーにnoteで発信中。</div>
+  </div>
+  <a class="profile-bar-link" href="https://note.com/akkiemishima/n/n2894d229f980" target="_blank" rel="noopener noreferrer">noteを読む</a>
+</div>
+  <div style="flex:1;">
+    <div style="font-size:13px;font-weight:700;color:#fff;">あっきー（三嶋義明）</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.88);line-height:1.6;">計算オタク。なんでも計算してみないと気が済まない性格。『難しいお金の話も、優しく、易しく』をモットーにnoteで発信中。</div>
+  </div>
+  <a href="https://note.com/akkiemishima/n/n2894d229f980" target="_blank" rel="noopener noreferrer" style="font-size:11px;background:rgba(255,255,255,0.2);color:#fff;padding:5px 10px;border-radius:8px;text-decoration:none;white-space:nowrap;">noteを読む</a>
+</div>
+
+<div class="container">
+
+  <!-- STEP 1: 実績入力 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📊</span> STEP 1｜過去の積立実績を入力</div>
+
+    <div class="ctrl-card">
+      <div class="ctrl-header">
+        <span class="ctrl-name">毎月の積立額</span>
+        <span class="ctrl-val" id="v-monthly" style="color:var(--coral);background:var(--coral-pale)">¥47,000</span>
+      </div>
+      <div class="ctrl-range">
+        <span class="ctrl-range-label">¥1,000</span>
+        <input type="range" id="s-monthly" min="1000" max="200000" step="1000" value="47000" oninput="onMonthly(this.value)">
+        <span class="ctrl-range-label">¥200,000</span>
+      </div>
+    </div>
+
+    <div class="ctrl-card">
+      <div class="ctrl-header">
+        <span class="ctrl-name">積立済み月数</span>
+        <span class="ctrl-val" id="v-months" style="color:var(--coral);background:var(--coral-pale)">24ヶ月</span>
+      </div>
+      <div class="ctrl-range">
+        <span class="ctrl-range-label">1ヶ月</span>
+        <input type="range" id="s-months" min="1" max="120" step="1" value="24" oninput="onMonths(this.value)">
+        <span class="ctrl-range-label">120ヶ月</span>
+      </div>
+    </div>
+
+    <div class="manual-input-wrap">
+      <span class="ctrl-name">現在の評価額</span>
+      <input type="number" class="manual-input" id="i-fv" value="1300000" oninput="calc()" placeholder="1300000">
+      <span class="manual-unit">円</span>
+    </div>
+
+    <div class="irr-result" id="irr-box">
+      <div>
+        <div class="irr-result-label">📐 IRR利回り（年率）</div>
+        <div class="irr-sub" id="irr-sub">月率 × 12乗で年率換算</div>
+      </div>
+      <div class="irr-result-val" id="v-irr">—</div>
+    </div>
+
+    <div class="compare-row" id="compare-row" style="display:none">
+      <div class="compare-box highlight">
+        <div class="compare-box-label">IRR方式（このツール）</div>
+        <div class="compare-box-val" id="c-irr">—</div>
+      </div>
+      <div class="compare-box">
+        <div class="compare-box-label">金融庁方式（参考）</div>
+        <div class="compare-box-val" id="c-fsa">—</div>
+      </div>
+    </div>
+
+    <button class="accordion-btn" onclick="toggleAcc(this)">▶ IRRとは？金融庁方式との違い</button>
+    <div class="accordion-content">
+      <strong>■ IRR（内部収益率）方式</strong><br>
+      毎月の実際の投資タイミングを正確に反映。<br>
+      1ヶ月目の積立は n ヶ月間、2ヶ月目は n-1 ヶ月間…と各月の複利効果を正確に計算します。<br><br>
+      <strong>■ 金融庁方式（RATE関数）</strong><br>
+      全額を積立終了時に一括投資したと仮定して計算。<br>
+      実際より高い利回りが算出されるため、同じ利回りを将来予測に使うと<strong>過大推計</strong>になります。<br><br>
+      <strong>■ 将来予測にはIRR方式が適切</strong><br>
+      「過去と同じ実績が続く」と仮定して将来予測する場合、IRR方式の方が実態に近い保守的な値を出します。
+    </div>
+  </div>
+
+  <!-- STEP 2: 追加運用期間 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">⏱️</span> STEP 2｜これから何ヶ月積み立てる？</div>
+
+    <div class="ctrl-card">
+      <div class="ctrl-header">
+        <span class="ctrl-name">追加積立期間</span>
+        <span class="ctrl-val" id="v-remain" style="color:var(--mint);background:var(--mint-pale)">96ヶ月</span>
+      </div>
+      <div class="ctrl-range">
+        <span class="ctrl-range-label">1ヶ月</span>
+        <input type="range" id="s-remain" min="1" max="360" step="1" value="96" oninput="onRemain(this.value)">
+        <span class="ctrl-range-label">360ヶ月</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 将来価値結果 -->
+  <div class="fv-result">
+    <div class="fv-label" id="fv-label">将来の運用資産額（予測）</div>
+    <div class="fv-val" id="fv-val">—</div>
+    <div class="fv-sub" id="fv-sub"></div>
+  </div>
+
+  <!-- グラフ -->
+  <div class="chart-card">
+    <div class="chart-title">📊 資産成長グラフ</div>
+    <div class="ratio-bar-wrap">
+      <div class="ratio-bar">
+        <div class="ratio-bar-p" id="bar-p" style="width:50%"></div>
+        <div class="ratio-bar-g" id="bar-g" style="width:50%"></div>
+      </div>
+      <div class="ratio-labels">
+        <span>🟢 積み立てたお金 <span id="lbl-p">—</span></span>
+        <span>🟡 増えたお金 <span id="lbl-g">—</span></span>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+  </div>
+
+  <p class="note">
+    ※ IRR（内部収益率）方式を採用。各月の積立が月初に行われ、同じ月率が継続すると仮定して計算しています。<br>
+    ※ 税金・手数料・インフレ等は考慮していません。将来の運用成果を保証するものではありません。<br>
+    ※ 実際の資産運用・投資判断はご自身の責任において行ってください。
+  </p>
+
+</div>
+
+<script>
+var _pw = atob("WWt1alk2NCUkZkUzKQ==");
+function checkPw() {
+  const input = document.getElementById('pw-input').value;
+  if (input === _pw) {
+    document.getElementById('pw-overlay').style.display = 'none';
+  } else {
+    document.getElementById('pw-error').textContent = 'パスワードが正しくありません。';
+    document.getElementById('pw-input').value = '';
+  }
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let state = { monthly: 47000, months: 24, fv: 1300000, remain: 96 };
+let chartInst = null;
+
+function fmtJPY(n) {
+  if (n >= 1e8) { const o=Math.floor(n/1e8),m=Math.round((n%1e8)/1e4); return m>0?o+'億'+m.toLocaleString()+'万円':o+'億円'; }
+  if (n >= 1e4) return Math.round(n/1e4).toLocaleString()+'万円';
+  return Math.round(n).toLocaleString()+'円';
+}
+function fmtShort(n) {
+  if (n >= 1e8) { const o=Math.floor(n/1e8),m=Math.round((n%1e8)/1e4); return m>0?o+'億'+m.toLocaleString()+'万':o+'億'; }
+  if (n >= 1e4) return Math.round(n/1e4).toLocaleString()+'万';
+  return Math.round(n).toLocaleString();
+}
+
+function onMonthly(v) {
+  state.monthly = parseFloat(v);
+  document.getElementById('v-monthly').textContent = '¥'+state.monthly.toLocaleString();
+  calc();
+}
+function onMonths(v) {
+  state.months = parseInt(v);
+  document.getElementById('v-months').textContent = state.months+'ヶ月';
+  calc();
+}
+function onRemain(v) {
+  state.remain = parseInt(v);
+  document.getElementById('v-remain').textContent = state.remain+'ヶ月';
+  calc();
+}
+
+// IRR逆算（Newton-Raphson）
+// cashflows: [-C]*n + [FV]
+function calcIRR(monthly, months, fv) {
+  const cfs = [];
+  for (let i = 0; i < months; i++) cfs.push(-monthly);
+  cfs.push(fv);
+
+  let r = 0.01;
+  for (let iter = 0; iter < 2000; iter++) {
+    let f = 0, df = 0;
+    for (let t = 0; t < cfs.length; t++) {
+      f  += cfs[t] / Math.pow(1+r, t);
+      df -= t * cfs[t] / Math.pow(1+r, t+1);
+    }
+    if (Math.abs(df) < 1e-15) break;
+    const step = f / df;
+    r -= step;
+    if (r < -0.9999) r = -0.9999;
+    if (Math.abs(step) < 1e-12) break;
+  }
+  return r; // 月率
+}
+
+// 将来価値（IRR方式・期首払い）
+// FV_future = FV_current*(1+r)^n + C*(1+r)*((1+r)^n-1)/r
+function futureValue(fvCurrent, monthly, rMonth, remainMonths) {
+  if (remainMonths === 0) return fvCurrent;
+  if (Math.abs(rMonth) < 1e-10) return fvCurrent + monthly * remainMonths;
+  const rn = Math.pow(1+rMonth, remainMonths);
+  return fvCurrent * rn + monthly * (1+rMonth) * (rn - 1) / rMonth;
+}
+
+// 金融庁方式（RATE逆算）
+function calcRATEAnnual(monthly, months, fv) {
+  let r = 0.01;
+  for (let iter = 0; iter < 2000; iter++) {
+    const rn = Math.pow(1+r, months);
+    const f  = monthly * (rn - 1) / r - fv;
+    const df = monthly * ((months * Math.pow(1+r, months-1) * r - (rn-1)) / (r*r));
+    if (Math.abs(df) < 1e-15) break;
+    const step = f / df;
+    r -= step;
+    if (r < 0) r = 1e-6;
+    if (Math.abs(step) < 1e-12) break;
+  }
+  return Math.pow(1+r, 12) - 1; // 年率
+}
+
+function calc() {
+  const fvInput = parseFloat(document.getElementById('i-fv').value) || 0;
+  state.fv = fvInput;
+
+  const { monthly, months, fv, remain } = state;
+  const principal_past = monthly * months;
+
+  // IRR計算
+  if (fv <= 0 || monthly <= 0 || months <= 0) {
+    document.getElementById('v-irr').textContent = '—';
+    document.getElementById('fv-val').textContent = '—';
+    return;
+  }
+
+  const rMonth = calcIRR(monthly, months, fv);
+  const rAnnual = Math.pow(1+rMonth, 12) - 1;
+
+  document.getElementById('v-irr').textContent = (rAnnual*100).toFixed(2)+'%';
+  document.getElementById('irr-sub').textContent = `月率 ${(rMonth*100).toFixed(3)}% → 年率換算`;
+
+  // 金融庁方式との比較
+  const rFSA = calcRATEAnnual(monthly, months, fv);
+  document.getElementById('compare-row').style.display = 'flex';
+  document.getElementById('c-irr').textContent = (rAnnual*100).toFixed(2)+'%';
+  document.getElementById('c-fsa').textContent = (rFSA*100).toFixed(2)+'%';
+
+  // 将来価値
+  const fvFuture = futureValue(fv, monthly, rMonth, remain);
+  const principal_future = monthly * remain;
+  const total_principal = principal_past + principal_future;
+  const gain = fvFuture - total_principal;
+
+  document.getElementById('fv-val').textContent = fmtJPY(Math.round(fvFuture));
+  document.getElementById('fv-label').textContent = '将来の運用資産額（予測）';
+  document.getElementById('fv-sub').textContent =
+    `積立済${months}ヶ月 + 追加${remain}ヶ月 ／ IRR ${(rAnnual*100).toFixed(2)}%`;
+
+  // 内訳バー
+  const ratio = fvFuture > 0 ? Math.round(total_principal / fvFuture * 100) : 50;
+  document.getElementById('bar-p').style.width = ratio+'%';
+  document.getElementById('bar-g').style.width = (100-ratio)+'%';
+  document.getElementById('lbl-p').textContent = fmtShort(Math.round(total_principal));
+  document.getElementById('lbl-g').textContent = fmtShort(Math.max(0, Math.round(gain)));
+
+  // グラフ
+  buildChart(fv, monthly, rMonth, remain);
+}
+
+function buildChart(fvNow, monthly, rMonth, remainMonths) {
+  const labels = [], d_p = [], d_g = [];
+  const totalYrs = Math.ceil(remainMonths / 12);
+  const maxPts = Math.min(totalYrs, 40);
+
+  for (let y = 1; y <= maxPts; y++) {
+    const mo = y * 12;
+    const fv = futureValue(fvNow, monthly, rMonth, Math.min(mo, remainMonths));
+    const p = state.monthly * state.months + monthly * Math.min(mo, remainMonths);
+    labels.push(y % 5 === 0 || y === 1 || y === maxPts ? y+'年' : '');
+    d_p.push(Math.round(p));
+    d_g.push(Math.max(0, Math.round(fv - p)));
+  }
+
+  if (chartInst) chartInst.destroy();
+  chartInst = new Chart(document.getElementById('mainChart'), {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: '元本', data: d_p, backgroundColor: '#5ba89a', stack: 'a' },
+      { label: '運用収益', data: d_g, backgroundColor: '#c9963a', stack: 'a' },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        title: ctx => ctx[0].label ? ctx[0].label+'後' : '',
+        label: ctx => ctx.dataset.label+': '+fmtShort(ctx.raw),
+        footer: items => '合計: '+fmtShort(items.reduce((s,i)=>s+i.raw,0))
+      }}},
+      scales: {
+        x: { stacked:true, grid:{display:false}, ticks:{color:'#b09a9a',font:{size:10},autoSkip:false,maxRotation:0} },
+        y: { stacked:true, grid:{color:'rgba(180,120,100,0.08)'}, ticks:{color:'#b09a9a',font:{size:11},callback:v=>fmtShort(v)} }
+      }
+    }
+  });
+}
+
+function toggleAcc(btn) {
+  const content = btn.nextElementSibling;
+  const open = content.style.display === 'block';
+  content.style.display = open ? 'none' : 'block';
+  btn.textContent = (open ? '▶' : '▼') + btn.textContent.slice(1);
+}
+
+// 初期計算
+calc();
+</script>
+</body>
+</html>
