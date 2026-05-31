@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>あっきーの『実績から将来予測』ツール</title>
+<title>あっきーの『お金の』シミュレーター</title>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,165 +37,243 @@ body {
                     radial-gradient(circle at 80% 80%, rgba(91,168,154,0.06) 0%, transparent 50%);
 }
 
-.page-header {
-  background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
-  color: #fff;
-  padding: 2.5rem 1.5rem 2rem;
-  text-align: center;
+/* ウィザード */
+.wizard-overlay {
+  position:fixed;inset:0;background:rgba(253,248,243,0.96);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:flex;align-items:flex-start;justify-content:center;
+  z-index:990;padding:20px;
+  overflow-y:auto;
 }
-.page-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-.page-header p { font-size: 13px; opacity: 0.88; line-height: 1.7; }
+.wizard-box {
+  background:#fff;border-radius:var(--radius);
+  padding:2rem 1.6rem;width:100%;max-width:400px;
+  box-shadow:0 8px 48px rgba(180,120,100,0.22);
+  animation:slideDown 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  margin:auto;
+}
+.wizard-step { display:none; }
+.wizard-step.active { display:block; }
+.wizard-emoji { font-size:40px; margin-bottom:12px; text-align:center; }
+.wizard-q { font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.5;text-align:center; }
+.wizard-hint { font-size:12px;color:var(--text2);margin-bottom:1.4rem;text-align:center;line-height:1.7; }
+.wizard-choices { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem; }
+.wizard-choice {
+  padding:14px 8px;border-radius:14px;border:2px solid var(--cream3);
+  background:#fff;font-family:inherit;font-size:13px;font-weight:700;
+  color:var(--text2);cursor:pointer;text-align:center;transition:all 0.18s;line-height:1.5;
+}
+.wizard-choice:hover,.wizard-choice.selected {
+  border-color:var(--coral);color:var(--coral);background:var(--coral-pale);
+}
+.wizard-next {
+  width:100%;padding:14px;border-radius:var(--radius-sm);border:none;
+  background:linear-gradient(135deg,var(--coral) 0%,#d4624a 100%);
+  color:#fff;font-size:15px;font-family:inherit;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 16px rgba(232,129,106,0.4);
+  transition:opacity 0.2s;margin-top:4px;
+}
+.wizard-next:hover{opacity:0.88;}
+.wizard-next:disabled{opacity:0.4;cursor:not-allowed;}
+.wizard-skip{display:block;text-align:center;font-size:12px;color:var(--text3);margin-top:12px;cursor:pointer;text-decoration:underline;}
+.wizard-progress{display:flex;gap:6px;justify-content:center;margin-bottom:1.2rem;}
+.wizard-dot{width:8px;height:8px;border-radius:50%;background:var(--cream3);transition:background 0.2s;}
+.wizard-dot.done{background:var(--coral);}
 
-.container { max-width: 520px; margin: 0 auto; padding: 1.5rem 1rem; }
+/* モードタブ */
+.mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 0.6rem;
+  background: var(--cream2);
+  padding: 6px;
+  border-radius: var(--radius);
+}
+.mode-tab {
+  padding: 12px 6px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: var(--text3);
+  transition: all 0.2s;
+  line-height: 1.5;
+}
+.mode-tab.active {
+  background: #fff;
+  color: var(--coral);
+  box-shadow: 0 2px 12px var(--shadow2);
+}
+.mode-sub { font-size: 10px; font-weight: 400; opacity: 0.75; }
 
-.card {
+/* タブ説明帯 */
+.mode-desc {
+  background:var(--coral-pale);border-radius:var(--radius-sm);
+  padding:10px 14px;margin-bottom:1.2rem;
+  font-size:14px;color:var(--coral);font-weight:700;line-height:1.7;
+  display:flex;align-items:flex-start;gap:8px;
+}
+.mode-desc-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+
+/* スライダーカード */
+.ctrl-card {
   background: #fff;
   border-radius: var(--radius);
-  padding: 1.6rem 1.4rem;
-  margin-bottom: 1.2rem;
-  box-shadow: 0 4px 24px var(--shadow);
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 16px var(--shadow);
+  transition: box-shadow 0.2s;
 }
-.card-title {
-  font-size: 15px; font-weight: 700; color: var(--text);
-  margin-bottom: 1.2rem;
-  display: flex; align-items: center; gap: 8px;
-}
-.card-title .icon { font-size: 20px; }
-
-/* コントロール */
-.ctrl-card {
-  background: var(--cream);
-  border-radius: var(--radius-sm);
-  padding: 1rem 1.1rem;
-  margin-bottom: 0.8rem;
-}
-.ctrl-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 0.5rem;
-}
-.ctrl-name { font-size: 13px; color: var(--text2); font-weight: 500; }
+.ctrl-card:hover { box-shadow: 0 4px 24px var(--shadow2); }
+.ctrl-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.ctrl-name { font-size: 14px; font-weight: 700; color: var(--text2); }
 .ctrl-val {
-  font-size: 16px; font-weight: 700;
-  padding: 3px 10px; border-radius: 8px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--coral);
+  background: var(--coral-pale);
+  padding: 4px 14px;
+  border-radius: 10px;
 }
-.ctrl-range {
-  display: flex; align-items: center; gap: 8px;
-}
+.ctrl-range { display: flex; align-items: center; gap: 10px; }
 .ctrl-range-label { font-size: 11px; color: var(--text3); white-space: nowrap; }
 input[type=range] {
-  flex: 1; height: 4px; cursor: pointer;
-  -webkit-appearance: none; appearance: none;
-  background: var(--cream3); border-radius: 2px; outline: none;
+  flex: 1; appearance: none; height: 6px;
+  background: var(--cream3); border-radius: 3px; outline: none; cursor: pointer;
 }
 input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: var(--coral); cursor: pointer;
-  box-shadow: 0 2px 6px rgba(232,129,106,0.4);
+  appearance: none; width: 22px; height: 22px;
+  border-radius: 50%; background: var(--coral);
+  cursor: pointer; box-shadow: 0 2px 8px var(--shadow2);
+  border: 3px solid #fff;
 }
 
-/* 手入力 */
-.manual-input-wrap {
-  display: flex; align-items: center; gap: 8px;
+/* 期間ブロック */
+.phase-block {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 16px var(--shadow);
+}
+.phase-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+.phase-badge {
+  font-size: 12px; font-weight: 700;
+  padding: 4px 12px; border-radius: 20px;
+}
+.phase-badge.p1 { background: var(--coral-pale); color: var(--coral); }
+.phase-badge.p2 { background: var(--mint-pale); color: var(--mint); }
+.phase-badge.p3 { background: var(--gold-pale); color: var(--gold); }
+.phase-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.toggle-label { font-size: 12px; color: var(--text3); font-weight: 700; }
+.toggle-track {
+  width: 44px; height: 24px; border-radius: 12px;
+  background: var(--cream3); position: relative;
+  transition: background 0.2s; cursor: pointer;
+}
+.toggle-track.on { background: var(--mint); }
+.toggle-track::after {
+  content: ''; position: absolute;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; top: 3px; left: 3px;
+  transition: left 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.toggle-track.on::after { left: 23px; }
+.phase-body { display: flex; flex-direction: column; gap: 10px; }
+.phase-body.hidden { display: none; }
+.phase-sub {
   background: var(--cream);
   border-radius: var(--radius-sm);
-  padding: 1rem 1.1rem;
-  margin-bottom: 0.8rem;
+  padding: 14px;
 }
-.manual-input-wrap .ctrl-name { font-size: 13px; color: var(--text2); font-weight: 500; white-space: nowrap; }
-.manual-input {
-  flex: 1; border: 2px solid var(--cream3); border-radius: 10px;
-  padding: 8px 12px; font-size: 16px; font-weight: 700;
-  font-family: inherit; color: var(--text); background: #fff;
-  text-align: right; outline: none; transition: border-color 0.2s;
-  max-width: 160px;
-}
-.manual-input:focus { border-color: var(--coral); }
-.manual-unit { font-size: 13px; color: var(--text2); }
+.phase-sub .ctrl-header { margin-bottom: 10px; }
+.phase-sub .ctrl-name { font-size: 13px; }
+.phase-sub .ctrl-val { font-size: 20px; padding: 3px 12px; }
 
-/* IRR結果バッジ */
-.irr-result {
-  background: var(--mint-pale);
-  border: 2px solid var(--mint-light);
-  border-radius: var(--radius-sm);
-  padding: 1rem 1.2rem;
-  margin-bottom: 0.8rem;
-  display: flex; justify-content: space-between; align-items: center;
+/* 期間ヒント */
+.phase-hint {
+  font-size:13px;color:var(--text3);margin-bottom:10px;
+  line-height:1.7;padding:0 2px;
 }
-.irr-result-label { font-size: 13px; color: var(--mint); font-weight: 700; }
-.irr-result-val { font-size: 22px; font-weight: 700; color: var(--mint); }
-.irr-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.phase-hint-toggle {
+  font-size:13px;color:var(--mint);margin-bottom:10px;
+  line-height:1.7;padding:0 2px;
+}
 
-/* 将来価値結果 */
-.fv-result {
+/* 結果ボックス */
+.result-box {
   background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
   border-radius: var(--radius);
-  padding: 1.8rem 1.4rem;
+  padding: 24px;
+  margin-bottom: 12px;
   text-align: center;
+  box-shadow: 0 6px 24px rgba(232,129,106,0.35);
   color: #fff;
-  margin-bottom: 1.2rem;
-  box-shadow: 0 6px 28px rgba(232,129,106,0.35);
+  position: relative;
+  overflow: hidden;
 }
-.fv-label { font-size: 13px; opacity: 0.88; margin-bottom: 6px; }
-.fv-val { font-size: 40px; font-weight: 700; line-height: 1.1; margin-bottom: 6px; }
-.fv-sub { font-size: 12px; opacity: 0.82; }
+.result-box::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.result-box::after {
+  content: '';
+  position: absolute;
+  bottom: -20px; left: -20px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+}
+.result-label { font-size: 12px; opacity: 0.85; margin-bottom: 8px; font-weight: 700; letter-spacing: 0.05em; }
+.result-val { font-size: 40px; font-weight: 700; line-height: 1.1; margin-bottom: 8px; }
+.result-sub { font-size: 12px; opacity: 0.8; }
+
+/* 内訳カード */
+.breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.bcard {
+  background: #fff; border-radius: var(--radius-sm);
+  padding: 16px; box-shadow: 0 2px 12px var(--shadow);
+  text-align: center;
+}
+.bcard-icon { font-size: 20px; margin-bottom: 6px; }
+.bcard-label { font-size: 11px; color: var(--text3); font-weight: 700; margin-bottom: 4px; }
+.bcard-val { font-size: 18px; font-weight: 700; }
+.color-principal { color: var(--mint); }
+.color-gain { color: var(--gold); }
 
 /* グラフ */
 .chart-card {
-  background: #fff;
-  border-radius: var(--radius);
-  padding: 1.2rem 1rem 1rem;
-  margin-bottom: 1.2rem;
-  box-shadow: 0 4px 24px var(--shadow);
+  background: #fff; border-radius: var(--radius);
+  padding: 20px; margin-bottom: 12px;
+  box-shadow: 0 2px 16px var(--shadow);
 }
-.chart-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 0.8rem; }
-.chart-wrap { height: 200px; position: relative; }
+.chart-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 12px; }
+.chart-wrap { position: relative; width: 100%; height: 240px; }
+.legend { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--text2); }
+.legend span { display: flex; align-items: center; gap: 5px; font-weight: 700; }
+.dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
-/* 内訳バー */
-.ratio-bar-wrap { margin: 0.8rem 0 0.4rem; }
-.ratio-bar {
-  height: 10px; border-radius: 5px; background: var(--cream3);
-  overflow: hidden; display: flex;
+/* ディスクレーマー */
+.disclaimer {
+  font-size: 11px; color: var(--text3); line-height: 1.9;
+  background: var(--cream2); border-radius: var(--radius-sm);
+  padding: 14px 16px;
 }
-.ratio-bar-p { background: var(--mint); height: 100%; transition: width 0.6s; }
-.ratio-bar-g { background: var(--gold); height: 100%; transition: width 0.6s; }
-.ratio-labels {
-  display: flex; justify-content: space-between;
-  font-size: 11px; color: var(--text3); margin-top: 4px;
-}
+.disclaimer p { margin-bottom: 2px; }
 
-/* 注記 */
-.note {
-  font-size: 11px; color: var(--text3); line-height: 1.7;
-  padding: 0 0.2rem;
-}
-.note a { color: var(--mint); }
-
-/* 比較セクション */
-.compare-row {
-  display: flex; gap: 8px; margin-bottom: 0.6rem;
-}
-.compare-box {
-  flex: 1; background: var(--cream); border-radius: var(--radius-sm);
-  padding: 0.8rem; text-align: center;
-}
-.compare-box.highlight { background: var(--mint-pale); border: 2px solid var(--mint-light); }
-.compare-box-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
-.compare-box-val { font-size: 16px; font-weight: 700; color: var(--text); }
-.compare-box.highlight .compare-box-val { color: var(--mint); }
-
-/* アコーディオン */
-.accordion-btn {
-  width: 100%; padding: 10px 14px; background: var(--cream2);
-  border: none; border-radius: var(--radius-sm); font-family: inherit;
-  font-size: 12px; color: var(--text2); cursor: pointer; text-align: left;
-  font-weight: 700; margin-top: 0.4rem;
-}
-.accordion-content {
-  display: none; padding: 12px 14px; font-size: 11px;
-  color: var(--text2); line-height: 1.9; background: var(--cream);
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-}
 /* パスワード */
 .pw-overlay {
   position: fixed; inset: 0;
@@ -257,25 +335,70 @@ input[type=range]::-webkit-slider-thumb {
   background:var(--cream2);border-radius:8px;padding:10px 12px;
   text-align:left;line-height:1.8;
 }
-.profile-bar {
-  background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
-  color: #fff; padding: 10px 1.2rem;
-  display: flex; align-items: center; gap: 12px;
-  max-width: 640px; margin: 0 auto;
-}
-.profile-bar-avatar { font-size: 28px; flex-shrink: 0; }
-.profile-bar-text { flex: 1; }
-.profile-bar-name { font-size: 14px; font-weight: 700; }
-.profile-bar-desc { font-size: 11px; opacity: 0.88; line-height: 1.6; }
-.profile-bar-link {
-  font-size: 11px; font-weight: 700; color: #fff;
-  background: rgba(255,255,255,0.22); border-radius: 20px;
-  padding: 4px 12px; white-space: nowrap; text-decoration: none;
-  flex-shrink: 0;
-}
-.profile-bar-link:hover { background: rgba(255,255,255,0.35); }
 
+/* 比率バー */
+.ratio-bar-wrap { margin: 10px 0 4px; }
+.ratio-bar-track { height: 10px; border-radius: 5px; background: var(--cream3); overflow: hidden; margin-bottom: 4px; }
+.ratio-bar-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #5ba89a, #c9963a); transition: width 0.6s cubic-bezier(0.34,1.2,0.64,1); }
+.ratio-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); font-weight: 700; }
 
+/* 年齢入力 */
+.age-card { background: #fff; border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 12px var(--shadow); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.age-label { font-size: 13px; font-weight: 700; color: var(--text2); white-space: nowrap; }
+.age-input { width: 72px; padding: 6px 10px; font-size: 15px; font-family: inherit; border: 2px solid var(--cream3); border-radius: 8px; background: var(--cream); color: var(--text); outline: none; text-align: center; transition: border-color 0.2s; }
+.age-input:focus { border-color: var(--coral); }
+.age-result { font-size: 13px; color: var(--coral); font-weight: 700; flex: 1; min-width: 160px; }
+
+/* 節約メッセージ */
+.saving-msg { background: var(--mint-pale); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 12px; font-size: 12px; color: var(--mint); font-weight: 700; text-align: center; display: none; }
+
+/* 計算式折りたたみ */
+.formula-toggle { background: none; border: 0.5px solid var(--cream3); border-radius: 8px; padding: 8px 14px; font-size: 12px; font-family: inherit; color: var(--text2); cursor: pointer; width: 100%; text-align: left; margin-top: 8px; }
+.formula-toggle:hover { background: var(--cream2); }
+.formula-body { display: none; background: var(--cream2); border-radius: 8px; padding: 12px 14px; margin-top: 6px; font-size: 11px; color: var(--text3); line-height: 2; }
+.formula-body.open { display: block; }
+
+/* シェアボタン */
+.share-section { margin-bottom: 12px; }
+.share-label { font-size: 11px; font-weight: 700; color: var(--text3); margin-bottom: 8px; }
+.share-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.share-btn { flex: 1; padding: 10px 6px; border-radius: var(--radius-sm); border: none; font-size: 11px; font-family: inherit; font-weight: 700; cursor: pointer; transition: opacity 0.2s; line-height: 1.3; text-align: center; }
+.share-btn:hover { opacity: 0.82; }
+.share-x { background: #1a1a1a; color: #fff; }
+.share-threads { background: #1a1a1a; color: #fff; }
+.share-insta { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af); color: #fff; }
+.share-copy { background: var(--cream2); color: var(--text2); border: 0.5px solid var(--cream3); }
+.share-copy.copied { background: var(--mint-pale); color: var(--mint); }
+
+/* 金融庁バッジ */
+.fsa-badge { display: inline-block; background: var(--mint-pale); color: var(--mint); font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-left: 6px; vertical-align: middle; }
+
+/* セクション区切り */
+.section-divider {
+  display:flex;align-items:center;gap:12px;
+  margin:2.4rem 0 1.6rem;
+}
+.section-divider-line {
+  flex:1;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cream3),transparent);
+}
+.section-divider-label {
+  font-size:11px;font-weight:700;color:var(--text3);
+  white-space:nowrap;padding:4px 12px;
+  background:var(--cream2);border-radius:20px;
+}
+
+/* section-header */
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 6px;
+}
+.section-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.section-badge-new {
+  background: var(--coral-pale); color: var(--coral);
+  font-size: 10px; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px; white-space: nowrap;
+}
 
 /* 取り崩しシミュレーター */
 .withdraw-section { margin-top: 0; }
@@ -300,6 +423,43 @@ input[type=range]::-webkit-slider-thumb {
 }
 .w-desc-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
 .w-note { font-size: 11px; color: var(--text3); margin-top: 10px; line-height: 1.7; background: var(--cream2); border-radius: 8px; padding: 10px 14px; }
+
+/* コンテナ */
+.container { max-width: 640px; margin: 0 auto; padding: 0 1.2rem; }
+
+/* プロフィールバー */
+.profile-bar {
+  background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
+  color: #fff; padding: 10px 1.2rem;
+  display: flex; align-items: center; gap: 12px;
+  max-width: 640px; margin: 0 auto;
+}
+.profile-bar-avatar { font-size: 28px; flex-shrink: 0; }
+.profile-bar-text { flex: 1; }
+.profile-bar-name { font-size: 14px; font-weight: 700; }
+.profile-bar-desc { font-size: 11px; opacity: 0.88; line-height: 1.6; }
+.profile-bar-link {
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: rgba(255,255,255,0.22); border-radius: 20px;
+  padding: 4px 12px; white-space: nowrap; text-decoration: none;
+  flex-shrink: 0;
+}
+.profile-bar-link:hover { background: rgba(255,255,255,0.35); }
+
+/* 結果サマリーバナー（ウィザード後固定表示） */
+.result-banner {
+  display: none;
+  background: linear-gradient(135deg, #fff5f0 0%, #f0faf8 100%);
+  border-bottom: 2px solid var(--cream3);
+  padding: 12px 1.2rem;
+  text-align: center;
+  position: sticky; top: 0; z-index: 100;
+}
+.result-banner.show { display: block; }
+.result-banner-text { font-size: 13px; color: var(--text2); font-weight: 700; line-height: 1.8; }
+.result-banner-text strong { color: var(--coral); font-size: 18px; }
+
+/* STEPバッジ */
 .step-badge {
   display: inline-flex; align-items: center; gap: 8px;
   background: linear-gradient(135deg, var(--coral) 0%, #d4624a 100%);
@@ -318,6 +478,41 @@ input[type=range]::-webkit-slider-thumb {
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; font-weight: 700; flex-shrink: 0;
 }
+
+/* グラフコメント */
+.chart-comment {
+  margin-top: 10px; padding: 10px 14px;
+  background: var(--gold-pale); border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--gold); font-weight: 700;
+  line-height: 1.7; text-align: center;
+}
+
+/* 上級者設定トグル */
+.advanced-toggle-btn {
+  width: 100%; padding: 10px 16px;
+  background: var(--cream2); border: none;
+  border-radius: var(--radius-sm); font-family: inherit;
+  font-size: 13px; font-weight: 700; color: var(--text2);
+  cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px; transition: background 0.2s;
+}
+.advanced-toggle-btn:hover { background: var(--cream3); }
+.advanced-toggle-btn .adv-arrow { transition: transform 0.2s; margin-left: auto; }
+.advanced-toggle-btn.open .adv-arrow { transform: rotate(180deg); }
+.advanced-section { display: none; }
+.advanced-section.open { display: block; }
+
+/* タブ順序改善：毎月いくら？を先頭に */
+.mode-tabs { direction: ltr; }
+
+/* breakdownラベル平易化 */
+.bcard-label-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+/* シェアを下部に移動（チャート後） */
+.share-section-bottom { margin-top: 12px; margin-bottom: 12px; }
+
+/* セクション大区切り */
 .section-divider {
   display:flex;align-items:center;gap:12px;
   margin:2.4rem 0 1.6rem;
@@ -331,32 +526,72 @@ input[type=range]::-webkit-slider-thumb {
   white-space:nowrap;padding:4px 12px;
   background:var(--cream2);border-radius:20px;
 }
-.phase-block {
-  background: var(--cream); border-radius: var(--radius-sm);
-  padding: 1rem 1.1rem; margin-bottom: 0.8rem;
-}
-.phase-header { display: flex; flex-direction: column; gap: 4px; }
-.phase-badge {
-  display: inline-block; padding: 2px 8px;
-  border-radius: 20px; font-size: 11px; font-weight: 700;
-}
-.phase-badge.p1 { background: var(--coral-pale); color: var(--coral); }
-.toggle-track {
-  width: 36px; height: 20px; border-radius: 10px;
-  background: var(--cream3); cursor: pointer;
-  position: relative; transition: background 0.2s;
-}
-.toggle-track::after {
-  content: ''; position: absolute; top: 3px; left: 3px;
-  width: 14px; height: 14px; border-radius: 50%;
-  background: #fff; transition: left 0.2s;
-}
-.toggle-track.on { background: var(--mint); }
-.toggle-track.on::after { left: 19px; }
-.toggle-label { font-size: 11px; font-weight: 700; color: var(--text3); }
 </style>
 </head>
 <body>
+<!-- PASSWORD GATE START -->
+<style>
+#pw-gate {
+  position: fixed; inset: 0; z-index: 99999;
+  background: linear-gradient(135deg, #fdf8f3 0%, #f7f0e8 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Zen Maru Gothic', 'Hiragino Sans', sans-serif;
+}
+#pw-box {
+  background: #fff; border-radius: 24px;
+  padding: 2.5rem 2rem; max-width: 420px; width: 90%;
+  box-shadow: 0 8px 40px rgba(180,120,100,0.18);
+  text-align: center;
+}
+#pw-box h2 { font-size: 20px; color: #3d2c2c; margin-bottom: 0.4rem; }
+#pw-box .pw-sub { font-size: 13px; color: #7a6060; margin-bottom: 1.4rem; line-height: 1.7; }
+#pw-box .pw-note-link {
+  display: block; background: #fdf0ec; border-radius: 12px;
+  padding: 1rem; margin-bottom: 1.4rem; text-decoration: none;
+  border: 2px solid #f5c4b8; transition: background 0.2s;
+}
+#pw-box .pw-note-link:hover { background: #fbe4dc; }
+#pw-box .pw-note-title { font-size: 14px; font-weight: 700; color: #e8816a; }
+#pw-box .pw-note-desc { font-size: 12px; color: #7a6060; margin-top: 3px; }
+#pw-input-wrap { display: flex; gap: 8px; margin-bottom: 0.6rem; }
+#pw-input {
+  flex: 1; padding: 12px 14px; border: 2px solid #efe5d8;
+  border-radius: 12px; font-size: 15px; font-family: inherit;
+  outline: none; color: #3d2c2c; background: #fdf8f3;
+  transition: border-color 0.2s;
+}
+#pw-input:focus { border-color: #e8816a; }
+#pw-submit {
+  padding: 12px 18px; background: #e8816a; color: #fff;
+  border: none; border-radius: 12px; font-size: 14px; font-weight: 700;
+  font-family: inherit; cursor: pointer; white-space: nowrap;
+  transition: background 0.2s;
+}
+#pw-submit:hover { background: #d4624a; }
+#pw-error { font-size: 12px; color: #e8816a; min-height: 18px; }
+#pw-box .pw-lock { font-size: 40px; margin-bottom: 0.8rem; }
+</style>
+
+
+<!-- PASSWORD GATE END -->
+
+<!-- プロフィールバー -->
+<div class="profile-bar">
+  <div class="profile-bar-avatar">🌱</div>
+  <div class="profile-bar-text">
+    <div class="profile-bar-name">あっきー（三嶋義明）</div>
+    <div class="profile-bar-desc">計算オタク。なんでも計算してみないと気が済まない性格。『難しいお金の話も、優しく、易しく』をモットーにnoteで発信中。</div>
+  </div>
+  <a class="profile-bar-link" href="https://note.com/akkiemishima/n/n2894d229f980" target="_blank" rel="noopener noreferrer">noteを読む</a>
+</div>
+
+<!-- 結果サマリーバナー -->
+<div class="result-banner" id="result-banner">
+  <div class="result-banner-text" id="result-banner-text">
+    今日から積み立てると、<strong id="banner-age">—歳</strong>で<strong id="banner-amount">—</strong>に！
+  </div>
+</div>
+
 <div class="pw-overlay" id="pw-overlay" style="display:none;">
   <div class="pw-illustration"><svg width="100%" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
 <rect fill="#fff8f3" width="680" height="420"/>
@@ -441,7 +676,7 @@ input[type=range]::-webkit-slider-thumb {
 </svg></div>
   <div class="pw-box">
     <div class="pw-logo">💴</div>
-    <h2>あっきーのつみたて予測シミュレーター</h2>
+    <h2>あっきーのつみたてシミュレーター</h2>
     <p>ご利用にはパスワードが必要です。<br>パスワードを入力してください。</p>
     <input class="pw-input" type="password" id="pw-input" placeholder="パスワード" onkeydown="if(event.key==='Enter')checkPw()">
     <button class="pw-btn" onclick="checkPw()">はじめる</button>
@@ -450,136 +685,268 @@ input[type=range]::-webkit-slider-thumb {
   </div>
 </div>
 
+<!-- ウィザード -->
+<div class="wizard-overlay" id="wizard-overlay" style="display:none;">
+  <div class="wizard-box">
+    <div class="wizard-progress">
+      <div class="wizard-dot" id="wd0"></div>
+      <div class="wizard-dot" id="wd1"></div>
+      <div class="wizard-dot" id="wd2"></div>
+    </div>
 
+    <!-- Step 0: 年齢 -->
+    <div class="wizard-step active" id="wstep-0">
+      <div class="wizard-emoji">🎂</div>
+      <div class="wizard-q">いまいくつですか？</div>
+      <div class="wizard-hint">スライダーで年齢を選んでください</div>
+      <div style="background:var(--cream);border-radius:var(--radius-sm);padding:20px 16px;margin-bottom:1.2rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <span style="font-size:13px;font-weight:700;color:var(--text2);">現在の年齢</span>
+          <span id="wizard-age-val" style="font-size:28px;font-weight:700;color:var(--coral);background:var(--coral-pale);padding:4px 16px;border-radius:10px;">25歳</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;color:var(--text3);">10歳</span>
+          <input type="range" id="wizard-age-slider" min="10" max="80" step="1" value="25"
+            oninput="wizardAgeSlide(this.value)" style="flex:1;">
+          <span style="font-size:11px;color:var(--text3);">80歳</span>
+        </div>
+      </div>
+      <button class="wizard-next" id="wizard-next-0" onclick="wizardNext(0)">次へ →</button>
+      <span class="wizard-skip" onclick="skipWizard()">スキップして使う</span>
+    </div>
 
-<div class="page-header">
-  <h1>📈 実績から将来予測</h1>
-  <p>過去の積立実績を入力すると<br>IRR（内部収益率）で利回りを計算し<br>同じ利回りが続く場合の将来価値を表示します</p>
-</div>
-<!-- プロフィールバー -->
-<div class="profile-bar">
-  <div class="profile-bar-avatar">🌱</div>
-  <div class="profile-bar-text">
-    <div class="profile-bar-name">あっきー（三嶋義明）</div>
-    <div class="profile-bar-desc">計算オタク。なんでも計算してみないと気が済まない性格。『難しいお金の話も、優しく、易しく』をモットーにnoteで発信中。</div>
+    <!-- Step 1: 月積立額 -->
+    <div class="wizard-step" id="wstep-1">
+      <div class="wizard-emoji">💰</div>
+      <div class="wizard-q">毎月いくら貯められそう？</div>
+      <div class="wizard-hint">まずは少額でも大丈夫。あとで自由に変えられます</div>
+      <div class="wizard-choices">
+        <button class="wizard-choice" data-val="5000" onclick="wizardSelect(this,'monthly')">月5,000円<br><span style="font-size:11px;opacity:0.7;">コーヒー代節約</span></button>
+        <button class="wizard-choice" data-val="10000" onclick="wizardSelect(this,'monthly')">月1万円<br><span style="font-size:11px;opacity:0.7;">よくある金額</span></button>
+        <button class="wizard-choice" data-val="30000" onclick="wizardSelect(this,'monthly')">月3万円<br><span style="font-size:11px;opacity:0.7;">本気モード</span></button>
+        <button class="wizard-choice" data-val="50000" onclick="wizardSelect(this,'monthly')">月5万円〜<br><span style="font-size:11px;opacity:0.7;">がっつり積立</span></button>
+      </div>
+      <button class="wizard-next" id="wizard-next-1" onclick="wizardNext(1)" disabled>次へ →</button>
+      <span class="wizard-skip" onclick="skipWizard()">スキップして使う</span>
+    </div>
+
+    <!-- Step 2: 増額するか？ -->
+    <div class="wizard-step" id="wstep-2">
+      <div class="wizard-emoji">📈</div>
+      <div class="wizard-q">途中で積立額を<br>増やす予定はありますか？</div>
+      <div class="wizard-hint">昇給・ボーナス・子育て終了後など</div>
+
+      <!-- YES/NO 選択 -->
+      <div class="wizard-choices" style="grid-template-columns:1fr 1fr;margin-bottom:1rem;" id="wizard-increase-choice">
+        <button class="wizard-choice" data-val="yes" onclick="wizardIncreaseSelect('yes')" style="padding:18px 8px;font-size:15px;">
+          はい 📈<br><span style="font-size:11px;opacity:0.7;">増やす予定あり</span>
+        </button>
+        <button class="wizard-choice" data-val="no" onclick="wizardIncreaseSelect('no')" style="padding:18px 8px;font-size:15px;">
+          いいえ 🙂<br><span style="font-size:11px;opacity:0.7;">このままでOK</span>
+        </button>
+      </div>
+
+      <!-- YES時：詳細スライダー -->
+      <div id="wizard-increase-detail" style="display:none;">
+        <!-- 何年後に増額？ -->
+        <div style="background:var(--cream);border-radius:var(--radius-sm);padding:16px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text2);">何年後に増額？</span>
+            <span id="wizard-incyears-val" style="font-size:22px;font-weight:700;color:var(--mint);background:var(--mint-pale);padding:3px 14px;border-radius:10px;">10年後</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text3);">1年後</span>
+            <input type="range" id="wizard-incyears-slider" min="1" max="40" step="1" value="10"
+              oninput="wizardIncYearsSlide(this.value)" style="flex:1;">
+            <span style="font-size:11px;color:var(--text3);">40年後</span>
+          </div>
+        </div>
+        <!-- 増額後の積立額 -->
+        <div style="background:var(--cream);border-radius:var(--radius-sm);padding:16px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text2);">増額後の積立額</span>
+            <span id="wizard-incamt-val" style="font-size:22px;font-weight:700;color:var(--gold);background:var(--gold-pale);padding:3px 14px;border-radius:10px;">月5万円</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:11px;color:var(--text3);">1千円</span>
+            <input type="range" id="wizard-incamt-slider" min="1000" max="200000" step="1000" value="50000"
+              oninput="wizardIncAmtSlide(this.value)" style="flex:1;">
+            <span style="font-size:11px;color:var(--text3);">20万円</span>
+          </div>
+        </div>
+        <!-- さらに増額するか？ -->
+        <div style="background:var(--cream);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;" id="wizard-inc2-block" style="display:none;">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;">さらにもう一度増やす？（任意）</div>
+          <div class="wizard-choices" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;" id="wizard-increase2-choice">
+            <button class="wizard-choice" data-val="yes2" onclick="wizardIncrease2Select('yes2')" style="font-size:12px;padding:10px 4px;">
+              はい 📈<br><span style="font-size:10px;opacity:0.7;">3段階目も設定</span>
+            </button>
+            <button class="wizard-choice" data-val="no2" onclick="wizardIncrease2Select('no2')" style="font-size:12px;padding:10px 4px;">
+              いいえ 🙂<br><span style="font-size:10px;opacity:0.7;">2段階でOK</span>
+            </button>
+          </div>
+        </div>
+        <!-- 3段階目 -->
+        <div id="wizard-inc3-detail" style="display:none;">
+          <div style="background:var(--cream);border-radius:var(--radius-sm);padding:16px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span style="font-size:13px;font-weight:700;color:var(--text2);">さらに何年後？</span>
+              <span id="wizard-inc3years-val" style="font-size:22px;font-weight:700;color:var(--gold);background:var(--gold-pale);padding:3px 14px;border-radius:10px;">10年後</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:11px;color:var(--text3);">1年後</span>
+              <input type="range" id="wizard-inc3years-slider" min="1" max="40" step="1" value="10"
+                oninput="wizardInc3YearsSlide(this.value)" style="flex:1;">
+              <span style="font-size:11px;color:var(--text3);">40年後</span>
+            </div>
+          </div>
+          <div style="background:var(--cream);border-radius:var(--radius-sm);padding:16px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span style="font-size:13px;font-weight:700;color:var(--text2);">3段階目の積立額</span>
+              <span id="wizard-inc3amt-val" style="font-size:22px;font-weight:700;color:var(--coral);background:var(--coral-pale);padding:3px 14px;border-radius:10px;">月10万円</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:11px;color:var(--text3);">1千円</span>
+              <input type="range" id="wizard-inc3amt-slider" min="1000" max="200000" step="1000" value="100000"
+                oninput="wizardInc3AmtSlide(this.value)" style="flex:1;">
+              <span style="font-size:11px;color:var(--text3);">20万円</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="wizard-next" id="wizard-next-2" onclick="wizardFinish()" disabled>結果を見る ✨</button>
+      <span class="wizard-skip" onclick="skipWizard()">スキップして使う</span>
+    </div>
   </div>
-  <a class="profile-bar-link" href="https://note.com/akkiemishima/n/n2894d229f980" target="_blank" rel="noopener noreferrer">noteを読む</a>
-</div>
-  <div style="flex:1;">
-    <div style="font-size:13px;font-weight:700;color:#fff;">あっきー（三嶋義明）</div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.88);line-height:1.6;">計算オタク。なんでも計算してみないと気が済まない性格。『難しいお金の話も、優しく、易しく』をモットーにnoteで発信中。</div>
-  </div>
-  <a href="https://note.com/akkiemishima/n/n2894d229f980" target="_blank" rel="noopener noreferrer" style="font-size:11px;background:rgba(255,255,255,0.2);color:#fff;padding:5px 10px;border-radius:8px;text-decoration:none;white-space:nowrap;">noteを読む</a>
 </div>
 
 <div class="container">
-
-  <!-- STEP 1: 実績入力 -->
-  <div class="card">
-    <div class="card-title"><span class="icon">📊</span> STEP 1｜過去の積立実績を入力</div>
-
-    <div class="ctrl-card">
-      <div class="ctrl-header">
-        <span class="ctrl-name">毎月の積立額</span>
-        <span class="ctrl-val" id="v-monthly" style="color:var(--coral);background:var(--coral-pale)">¥47,000</span>
-      </div>
-      <div class="ctrl-range">
-        <span class="ctrl-range-label">¥1,000</span>
-        <input type="range" id="s-monthly" min="1000" max="200000" step="1000" value="47000" oninput="onMonthly(this.value)">
-        <span class="ctrl-range-label">¥200,000</span>
-      </div>
+  <!-- STEP1 -->
+  <div style="margin-top:1.8rem;margin-bottom:1rem;">
+    <div class="step-badge">
+      <span class="step-num">1</span>
+      将来のお金を積み立てる
     </div>
+    <p style="font-size:13px;color:var(--text2);line-height:1.8;">スライダーを動かすだけで、将来いくら貯まるか・毎月いくら積み立てればいいかを試算できます。</p>
+  </div>
 
-    <div class="ctrl-card">
-      <div class="ctrl-header">
-        <span class="ctrl-name">積立済み月数</span>
-        <span class="ctrl-val" id="v-months" style="color:var(--coral);background:var(--coral-pale)">24ヶ月</span>
-      </div>
-      <div class="ctrl-range">
-        <span class="ctrl-range-label">1ヶ月</span>
-        <input type="range" id="s-months" min="1" max="120" step="1" value="24" oninput="onMonths(this.value)">
-        <span class="ctrl-range-label">120ヶ月</span>
-      </div>
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('monthly',this)">毎月いくら？<br><span class="mode-sub">目標額から逆算</span></button>
+    <button class="mode-tab" onclick="setMode('future',this)">将来いくら？<br><span class="mode-sub">積立額→資産額</span></button>
+    <button class="mode-tab" onclick="setMode('years',this)">何年間？<br><span class="mode-sub">月額→達成期間</span></button>
+  </div>
+
+  <!-- タブ説明帯（JSで切り替え） -->
+  <div class="mode-desc" id="mode-desc">
+    <span class="mode-desc-icon">💡</span>
+    <span id="mode-desc-text">毎月の積立額と積立期間を入力すると、<strong>将来いくらになるか</strong>を計算します。</span>
+  </div>
+
+  <div id="controls"></div>
+
+  <div class="result-box">
+    <div class="result-label" id="result-label">将来の運用資産額</div>
+    <div class="result-val" id="result-val">—</div>
+    <div class="result-sub" id="result-sub"></div>
+  </div>
+
+  <div class="breakdown">
+    <div class="bcard">
+      <div class="bcard-icon">💰</div>
+      <div class="bcard-label">積み立てたお金<span class="bcard-label-sub">（元本）</span></div>
+      <div class="bcard-val color-principal" id="b-principal">—</div>
+      <div id="b-principal-detail" style="font-size:10px;color:var(--text3);margin-top:5px;line-height:1.7;"></div>
     </div>
-
-    <div class="manual-input-wrap">
-      <span class="ctrl-name">現在の評価額</span>
-      <input type="number" class="manual-input" id="i-fv" value="1300000" oninput="calc()" placeholder="1300000">
-      <span class="manual-unit">円</span>
-    </div>
-
-    <div class="irr-result" id="irr-box">
-      <div>
-        <div class="irr-result-label">📐 IRR利回り（年率）</div>
-        <div class="irr-sub" id="irr-sub">月率 × 12乗で年率換算</div>
-      </div>
-      <div class="irr-result-val" id="v-irr">—</div>
-    </div>
-
-    <div class="compare-row" id="compare-row" style="display:none">
-      <div class="compare-box highlight">
-        <div class="compare-box-label">IRR方式（このツール）</div>
-        <div class="compare-box-val" id="c-irr">—</div>
-      </div>
-      <div class="compare-box">
-        <div class="compare-box-label">金融庁方式（参考）</div>
-        <div class="compare-box-val" id="c-fsa">—</div>
-      </div>
-    </div>
-
-    <button class="accordion-btn" onclick="toggleAcc(this)">▶ IRRとは？金融庁方式との違い</button>
-    <div class="accordion-content">
-      <strong>■ IRR（内部収益率）方式</strong><br>
-      毎月の実際の投資タイミングを正確に反映。<br>
-      1ヶ月目の積立は n ヶ月間、2ヶ月目は n-1 ヶ月間…と各月の複利効果を正確に計算します。<br><br>
-      <strong>■ 金融庁方式（RATE関数）</strong><br>
-      全額を積立終了時に一括投資したと仮定して計算。<br>
-      実際より高い利回りが算出されるため、同じ利回りを将来予測に使うと<strong>過大推計</strong>になります。<br><br>
-      <strong>■ 将来予測にはIRR方式が適切</strong><br>
-      「過去と同じ実績が続く」と仮定して将来予測する場合、IRR方式の方が実態に近い保守的な値を出します。
+    <div class="bcard">
+      <div class="bcard-icon">✨</div>
+      <div class="bcard-label">増えたお金<span class="bcard-label-sub">（運用収益）</span></div>
+      <div class="bcard-val color-gain" id="b-gain">—</div>
     </div>
   </div>
 
-  <!-- STEP 2: 追加運用期間 -->
-  <div class="card">
-    <div class="card-title"><span class="icon">⏱️</span> STEP 2｜これから何ヶ月積み立てる？</div>
-
-    <div class="ctrl-card">
-      <div class="ctrl-header">
-        <span class="ctrl-name">追加積立期間</span>
-        <span class="ctrl-val" id="v-remain" style="color:var(--mint);background:var(--mint-pale)">96ヶ月</span>
-      </div>
-      <div class="ctrl-range">
-        <span class="ctrl-range-label">1ヶ月</span>
-        <input type="range" id="s-remain" min="1" max="360" step="1" value="96" oninput="onRemain(this.value)">
-        <span class="ctrl-range-label">360ヶ月</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 将来価値結果 -->
-  <div class="fv-result">
-    <div class="fv-label" id="fv-label">将来の運用資産額（予測）</div>
-    <div class="fv-val" id="fv-val">—</div>
-    <div class="fv-sub" id="fv-sub"></div>
-  </div>
-
-  <!-- グラフ -->
-  <div class="chart-card">
-    <div class="chart-title">📊 資産成長グラフ</div>
+  <div class="bcard" style="margin-bottom:12px;">
+    <div class="bcard-label" style="margin-bottom:8px;">積み立てたお金 vs 増えたお金の内訳</div>
     <div class="ratio-bar-wrap">
-      <div class="ratio-bar">
-        <div class="ratio-bar-p" id="bar-p" style="width:50%"></div>
-        <div class="ratio-bar-g" id="bar-g" style="width:50%"></div>
-      </div>
-      <div class="ratio-labels">
-        <span>🟢 積み立てたお金 <span id="lbl-p">—</span></span>
-        <span>🟡 増えたお金 <span id="lbl-g">—</span></span>
-      </div>
+      <div class="ratio-bar-track"><div class="ratio-bar-fill" id="ratio-bar" style="width:50%"></div></div>
+      <div class="ratio-bar-labels"><span id="ratio-p-label" style="color:#5ba89a">積み立て —%</span><span id="ratio-g-label" style="color:#c9963a">増えた分 —%</span></div>
     </div>
-    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
   </div>
 
+  <div class="saving-msg" id="saving-msg"></div>
+
+  <div class="ctrl-card" style="margin-bottom:12px;">
+    <div class="ctrl-header">
+      <span class="ctrl-name">🎂 現在の年齢</span>
+      <span class="ctrl-val" id="v-age" style="color:var(--coral);background:var(--coral-pale)">30歳</span>
+    </div>
+    <div class="ctrl-range">
+      <span class="ctrl-range-label">10歳</span>
+      <input type="range" id="age-slider" min="10" max="80" step="1" value="30">
+      <span id="age-inline" style="font-size:15px;font-weight:700;color:var(--coral);white-space:nowrap;min-width:36px;text-align:right;">30歳</span>
+    </div>
+    <div style="margin-top:10px;text-align:center;" id="age-result">—</div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">📊 積立資産の成長グラフ</div>
+    <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+    <div class="legend">
+      <span><span class="dot" style="background:#5ba89a"></span>積み立てたお金</span>
+      <span><span class="dot" style="background:#c9963a"></span>増えたお金（複利効果）</span>
+    </div>
+    <div class="chart-comment" id="chart-comment"></div>
+  </div>
+
+  <div class="share-section share-section-bottom">
+    <div class="share-label">結果をシェアする 📣</div>
+    <div class="share-row">
+      <button class="share-btn share-x" onclick="shareX()">𝕏</button>
+      <button class="share-btn share-threads" onclick="shareThreads()">Threads</button>
+      <button class="share-btn share-insta" onclick="shareInsta()">Instagram</button>
+      <button class="share-btn share-copy" id="copy-btn" onclick="copyResult()">コピー</button>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <p>※ 本シミュレーションの結果は将来の運用成果を予測・保証するものではありません。</p>
+    <p>※ 積立タイミングは期首払い（月初）、IRR（内部収益率）方式を採用しています。実際の積立タイミングを正確に反映するため、金融庁つみたてシミュレーターより保守的な（低めの）将来価値を算出します。</p>
+    <p>※ 税金・手数料・インフレ等は考慮していません。実際の資産運用・投資判断はご自身の責任において行ってください。</p>
+    <button class="formula-toggle" onclick="toggleFormula(this)">▶ 計算式を見る（数学が好きな方へ）</button>
+    <div class="formula-body" id="formula-body">
+      <strong>■ 月次利率の換算</strong><br>
+      r月 = (1 + r年)^(1/12) − 1<br>
+      例：年利10% → r月 = 1.10^(1/12) − 1 ≈ 0.7974%<br>
+      <br>
+      <strong>■ 将来価値（積立FV・期首払い／IRR方式）</strong><br>
+      FV = C × (1 + r月) × { (1 + r月)^n − 1 } / r月<br>
+      C：毎月の積立額　n：積立月数（年数×12）<br>
+      ※ 期首払い（月初積立）のため、金融庁方式（期末払い）より各月の投資が1ヶ月多く複利運用されます。<br><br>
+      <strong>■ 金融庁方式との違い</strong><br>
+      金融庁方式（期末払い）：FV = C × { (1 + r月)^n − 1 } / r月<br>
+      IRR方式（期首払い）：FV = C × (1 + r月) × { (1 + r月)^n − 1 } / r月<br>
+      → IRR方式は過去の実績利回りをそのまま入力できるため、実績ベースの将来予測に適しています。<br>
+      <br>
+      <strong>■ ① 必要積立額を求める式</strong><br>
+      C = FV × r月 / { (1 + r月)^n − 1 }<br>
+      <br>
+      【例】目標700万円・年利10%・20年（240ヶ月）<br>
+      r月 = 1.10^(1/12) − 1 ≈ 0.797414%<br>
+      C = 7,000,000 × 0.00797414 / (1.00797414^240 − 1)<br>
+      　 = 55,819 / 5.7275<br>
+      　 ≈ <strong>9,746円</strong><br>
+      <br>
+      <strong>■ ② 必要積立期間を求める式</strong><br>
+      n = log(1 + FV × r月 / C) / log(1 + r月)<br>
+      <br>
+      【例】目標700万円・年利10%・月1万円積立<br>
+      r月 ≈ 0.797414%<br>
+      n = log(1 + 7,000,000 × 0.00797414 / 10,000) / log(1.00797414)<br>
+      　 = log(1 + 55.819) / log(1.00797414)<br>
+      　 = log(56.819) / 0.003946<br>
+      　 ≈ 237.5ヶ月 ÷ 12 ≈ <strong>19.8年</strong>
+    </div>
+  </div>
 
   <!-- セクション区切り -->
   <div class="section-divider" style="margin: 2.4rem 0 0;">
@@ -598,6 +965,22 @@ input[type=range]::-webkit-slider-thumb {
       <p style="font-size:13px;color:var(--text2);line-height:1.8;">積み立てた資産を、毎月いくら使えるか・何歳まで持つかをシミュレーションします。</p>
     </div>
 
+    <!-- 積立結果を引き継ぐトグル -->
+    <div class="phase-block" style="margin-bottom:1.2rem;">
+      <div class="phase-header" style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:13px;font-weight:700;color:var(--text);">積立シミュレーターと連携する</span>
+          <div class="phase-toggle" onclick="toggleInherit()" id="inherit-toggle" style="display:flex;align-items:center;gap:6px;">
+            <span class="toggle-label" id="inherit-toggle-label">OFF</span>
+            <div class="toggle-track" id="inherit-track"></div>
+          </div>
+        </div>
+        <span class="phase-badge p1" style="font-size:10px;font-weight:700;">積立結果を引き継ぐ</span>
+      </div>
+      <div style="font-size:13px;color:var(--text3);padding:0 2px 4px;line-height:1.7;" id="inherit-off-hint">💡 ONにすると、上の積立結果をそのまま「今ある資金」に自動反映します</div>
+      <div id="inherit-info" style="display:none;padding:6px 2px 2px;"></div>
+    </div>
+
     <!-- タブ -->
     <div class="w-tabs">
       <button class="w-tab active" id="wtab-1" onclick="setWMode(1)">
@@ -611,6 +994,7 @@ input[type=range]::-webkit-slider-thumb {
       </button>
     </div>
 
+    <!-- タブ説明帯 -->
     <div class="w-desc" id="w-desc">
       <span class="w-desc-icon">💡</span>
       <span id="w-desc-text">毎月いくら使うかを決めると、<strong>何歳まで資金が持つか</strong>を計算します。</span>
@@ -619,79 +1003,119 @@ input[type=range]::-webkit-slider-thumb {
     <!-- ① 何歳まで持つ？ -->
     <div id="wpanel-1">
       <div id="wcontrols-1"></div>
-      <div class="fv-result" style="background:linear-gradient(135deg,var(--mint) 0%,#4a9488 100%);">
-        <div class="fv-label" id="w1-label">引き出し可能な期間</div>
-        <div class="fv-val" id="w1-val">—</div>
-        <div class="fv-sub" id="w1-sub"></div>
+      <div class="result-box" style="background:linear-gradient(135deg,var(--mint) 0%,#4a9488 100%);box-shadow:0 6px 24px rgba(91,168,154,0.3);">
+        <div class="result-label" id="w1-label">引き出し可能な期間</div>
+        <div class="result-val" id="w1-val">—</div>
+        <div class="result-sub" id="w1-sub"></div>
         <div id="w1-age" style="margin-top:6px;font-size:13px;opacity:0.9;font-weight:700;"></div>
       </div>
-      <div class="w-note">※ 毎月末に引き出し、残額を年複利（月次換算）で運用した場合の試算です。</div>
+      <div class="w-note">※ 毎月末に引き出し、残額を年複利（月次換算）で運用した場合の試算です。引出額 ≤ 毎月の利息の場合、理論上資金は永続します。</div>
     </div>
 
     <!-- ② 毎月いくら使える？ -->
     <div id="wpanel-2" style="display:none">
       <div id="wcontrols-2"></div>
-      <div class="fv-result" style="background:linear-gradient(135deg,var(--mint) 0%,#4a9488 100%);">
-        <div class="fv-label" id="w2-label">毎月使える金額</div>
-        <div class="fv-val" id="w2-val">—</div>
-        <div class="fv-sub" id="w2-sub"></div>
+      <div class="result-box" style="background:linear-gradient(135deg,var(--mint) 0%,#4a9488 100%);box-shadow:0 6px 24px rgba(91,168,154,0.3);">
+        <div class="result-label" id="w2-label">毎月使える金額</div>
+        <div class="result-val" id="w2-val">—</div>
+        <div class="result-sub" id="w2-sub"></div>
+        <div id="w2-age" style="margin-top:6px;font-size:13px;opacity:0.9;font-weight:700;"></div>
       </div>
-      <div class="w-note">※ 指定の期間終了時に残高がゼロになる毎月の均等引出額です（元利均等方式）。</div>
+      <div class="w-note">※ 指定の期間終了時に残高がちょうどゼロになる毎月の均等引出額です（元利均等方式）。</div>
     </div>
 
     <!-- ③ 何%必要？ -->
     <div id="wpanel-3" style="display:none">
       <div id="wcontrols-3"></div>
-      <div class="fv-result" style="background:linear-gradient(135deg,var(--mint) 0%,#4a9488 100%);">
-        <div class="fv-label" id="w3-label">必要な運用利回り</div>
-        <div class="fv-val" id="w3-val">—</div>
-        <div class="fv-sub" id="w3-sub"></div>
+      <div class="result-box" style="background:linear-gradient(135deg,var(--mint) 0%,#4a9488 100%);box-shadow:0 6px 24px rgba(91,168,154,0.3);">
+        <div class="result-label" id="w3-label">必要な運用利回り</div>
+        <div class="result-val" id="w3-val">—</div>
+        <div class="result-sub" id="w3-sub"></div>
       </div>
-      <div class="w-note">※ 指定の期間・毎月引出額で残高ゼロにするために必要な最低利回りを算出しています。</div>
+      <div class="w-note">※ 指定の期間・毎月引出額で残高ゼロにするために必要な最低利回りを算出しています。元本だけで賄える場合は利回り0%と表示します。</div>
     </div>
+
   </div><!-- /withdraw-section -->
 
   <!-- 引き出しグラフ -->
-  <div class="chart-card">
-    <div class="chart-title">📊 資金引き出しグラフ</div>
+  <div class="chart-card" id="withdraw-chart-card">
+    <div class="chart-title">資金引き出しグラフ</div>
     <div class="chart-wrap"><canvas id="withdrawChart"></canvas></div>
-    <div class="ratio-labels">
-      <span>🟢 残っているお金</span>
-      <span>🟠 使ったお金（累計）</span>
+    <div class="legend">
+      <span><span class="dot" style="background:#5ba89a"></span>残っているお金</span>
+      <span><span class="dot" style="background:#e8816a"></span>使ったお金（累計）</span>
     </div>
   </div>
 
-  <p class="note">
-    ※ 毎月末に引き出し、残額を年複利（月次換算）で運用した場合の試算です。税金・手数料・インフレ等は考慮していません。
-  </p>
+  <!-- 取り崩し計算式 -->
+  <div class="disclaimer" style="margin-top:0;">
+    <p>※ 毎月末に引き出し、残額を年複利（月次換算）で運用した場合の試算です。</p>
+    <p>※ 税金・手数料・インフレ等は考慮していません。実際の資産運用・投資判断はご自身の責任において行ってください。</p>
+    <button class="formula-toggle" onclick="toggleFormula2(this)">▶ 計算式を見る（数学が好きな方へ）</button>
+    <div class="formula-body" id="formula-body-2">
+      <strong>■ 月次利率の換算</strong><br>
+      r月 = (1 + r年)^(1/12) − 1<br>
+      例：年利3% → r月 = 1.03^(1/12) − 1 ≈ 0.2466%<br>
+      <br>
+      <strong>■ ① 何年何ヶ月でゼロ？（枯渇月数）</strong><br>
+      毎月末に引出額Wを受け取り、残高を複利運用するシミュレーション。<br>
+      残高B(m) = B(m−1) × (1 + r月) − W<br>
+      B(0) = 初期資金P　→　B(m) ≤ 0 となる最初の月mが枯渇月<br>
+      ※ r月 &gt; 0 のとき理論的な枯渇月数は対数で解けますが、<br>
+      　 このシミュレーターでは月次シミュレーションで正確に算出しています。<br>
+      <br>
+      【例】初期資金1,000万円・年利3%・毎月5万円引出し<br>
+      r月 = 1.03^(1/12) − 1 ≈ 0.2466%<br>
+      月次で残高を追うと、約<strong>25年5ヶ月</strong>で枯渇<br>
+      <br>
+      <strong>■ ② 毎月いくら引き出せる？（元利均等取り崩し）</strong><br>
+      W = P × r月 / { 1 − (1 + r月)^(−n) }<br>
+      P：初期資金　r月：月次利率　n：取り崩し月数（年数×12）<br>
+      ※ r月 = 0（年利0%）のとき W = P / n<br>
+      <br>
+      【例】初期資金1,000万円・年利3%・20年間（240ヶ月）<br>
+      r月 ≈ 0.2466%<br>
+      W = 10,000,000 × 0.002466 / (1 − 1.002466^(−240))<br>
+      　 = 24,660 / (1 − 0.5536)<br>
+      　 = 24,660 / 0.4464<br>
+      　 ≈ <strong>55,245円</strong><br>
+      <br>
+      <strong>■ ③ 何%で運用すればいい？（必要利回りの逆算）</strong><br>
+      W = P × r月 / { 1 − (1 + r月)^(−n) } を r月 について解く閉じた式はないため、<br>
+      二分法（バイセクション法）で数値的に r年 を算出しています。<br>
+      <br>
+      【例】初期資金1,000万円・毎月6万円・20年間（240ヶ月）<br>
+      6万円 &gt; 元本均等（41,667円）なので利回りが必要<br>
+      二分法で収束 → 年利約<strong>4.93%</strong>が必要
+    </div>
+  </div>
+</div><!-- /container -->
 
-  <p class="note" style="margin-top:1rem;">
-    ※ IRR（内部収益率）方式を採用。各月の積立が月初に行われ、同じ月率が継続すると仮定して計算しています。<br>
-    ※ 税金・手数料・インフレ等は考慮していません。将来の運用成果を保証するものではありません。<br>
-    ※ 実際の資産運用・投資判断はご自身の責任において行ってください。
-  </p>
-
-</div>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 var _pw = atob("WWt1alk2NCUkZkUzKQ==");
 function checkPw() {
   const input = document.getElementById('pw-input').value;
   if (input === _pw) {
     document.getElementById('pw-overlay').style.display = 'none';
+    // ウィザードを表示
+    document.getElementById('wizard-overlay').style.display = 'flex';
+    renderControls(); update();
+    bindAgeSlider();
+    if (typeof renderWControls === 'function') renderWControls();
   } else {
     document.getElementById('pw-error').textContent = 'パスワードが正しくありません。';
     document.getElementById('pw-input').value = '';
   }
 }
-window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('pw-overlay').style.display = 'flex';
-});
-</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-let state = { monthly: 47000, months: 24, fv: 1300000, remain: 96 };
-let chartInst = null;
+
+let mode = 'future', chartInst = null;
+const state = {
+  monthly: 50000, rate: 5, years: 20, target: 20000000,
+  p2on: false, p3on: false,
+  m1: 50000, y1: 20, m2: 50000, y2: 10, m3: 50000, y3: 10,
+  age: 30,
+};
 
 function fmtJPY(n) {
   if (n >= 1e8) { const o=Math.floor(n/1e8),m=Math.round((n%1e8)/1e4); return m>0?o+'億'+m.toLocaleString()+'万円':o+'億円'; }
@@ -703,181 +1127,639 @@ function fmtShort(n) {
   if (n >= 1e4) return Math.round(n/1e4).toLocaleString()+'万';
   return Math.round(n).toLocaleString();
 }
-
-function onMonthly(v) {
-  state.monthly = parseFloat(v);
-  document.getElementById('v-monthly').textContent = '¥'+state.monthly.toLocaleString();
-  calc();
+// IRR方式：期首払い（月初に積立）
+// FV = C*(1+r)*((1+r)^n - 1)/r
+// 金融庁方式（期末払い）との違い：全体に(1+r)が掛かる分だけ大きくなる
+function monthlyFV(monthly, rate, months) {
+  if (rate===0) return monthly*months;
+  const r = Math.pow(1+rate/100,1/12)-1;
+  return monthly*(1+r)*(Math.pow(1+r,months)-1)/r;
 }
-function onMonths(v) {
-  state.months = parseInt(v);
-  document.getElementById('v-months').textContent = state.months+'ヶ月';
-  calc();
+function growFV(fv, rate, months) {
+  const r = Math.pow(1+rate/100,1/12)-1;
+  return fv*Math.pow(1+r,months);
 }
-function onRemain(v) {
-  state.remain = parseInt(v);
-  document.getElementById('v-remain').textContent = state.remain+'ヶ月';
-  calc();
+function solveMonthly(target, rate, months) {
+  if (rate===0) return target/months;
+  const r = Math.pow(1+rate/100,1/12)-1;
+  return target/((1+r)*(Math.pow(1+r,months)-1)/r);
+}
+function solveMonths(target, monthly, rate) {
+  if (rate===0) return target/monthly;
+  let lo=1,hi=600;
+  for(let i=0;i<60;i++){const mid=(lo+hi)/2;monthlyFV(monthly,rate,mid)<target?lo=mid:hi=mid;}
+  return Math.ceil((lo+hi)/2);
 }
 
-// IRR逆算（Newton-Raphson）
-// cashflows: [-C]*n + [FV]
-function calcIRR(monthly, months, fv) {
-  const cfs = [];
-  for (let i = 0; i < months; i++) cfs.push(-monthly);
-  cfs.push(fv);
+function makeCtrl(id,label,min,max,step,val,fmt,valColor) {
+  const vc = valColor||'var(--coral)';
+  const vbg = valColor==='var(--mint)'?'var(--mint-pale)':valColor==='var(--gold)'?'var(--gold-pale)':'var(--coral-pale)';
+  return `<div class="ctrl-card">
+    <div class="ctrl-header">
+      <span class="ctrl-name">${label}</span>
+      <span class="ctrl-val" id="v-${id}" style="color:${vc};background:${vbg}">${fmt(val)}</span>
+    </div>
+    <div class="ctrl-range">
+      <span class="ctrl-range-label">${fmt(min)}</span>
+      <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">
+      <span class="ctrl-range-label">${fmt(max)}</span>
+    </div>
+  </div>`;
+}
+function makeSubCtrl(id,label,min,max,step,val,fmt,valColor) {
+  const vc = valColor||'var(--coral)';
+  const vbg = valColor==='var(--mint)'?'var(--mint-pale)':valColor==='var(--gold)'?'var(--gold-pale)':'var(--coral-pale)';
+  return `<div class="phase-sub">
+    <div class="ctrl-header" style="margin-bottom:10px">
+      <span class="ctrl-name" style="font-size:14px">${label}</span>
+      <span class="ctrl-val" id="v-${id}" style="font-size:20px;color:${vc};background:${vbg}">${fmt(val)}</span>
+    </div>
+    <div class="ctrl-range">
+      <span class="ctrl-range-label">${fmt(min)}</span>
+      <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">
+      <span class="ctrl-range-label">${fmt(max)}</span>
+    </div>
+  </div>`;
+}
 
-  let r = 0.01;
-  for (let iter = 0; iter < 2000; iter++) {
-    let f = 0, df = 0;
-    for (let t = 0; t < cfs.length; t++) {
-      f  += cfs[t] / Math.pow(1+r, t);
-      df -= t * cfs[t] / Math.pow(1+r, t+1);
-    }
-    if (Math.abs(df) < 1e-15) break;
-    const step = f / df;
-    r -= step;
-    if (r < -0.9999) r = -0.9999;
-    if (Math.abs(step) < 1e-12) break;
+const modeDescs = {
+  monthly: '🎯 目標金額と積立期間を決めると、<strong>毎月いくら積み立てればいいか</strong>がわかります。まずここから始めてみましょう！',
+  future: '📈 毎月の積立額と積立期間を入力すると、<strong>将来いくらになるか</strong>を計算します。',
+  years: '⏱ 毎月の積立額と目標金額を入力すると、<strong>必要な積立期間</strong>がわかります。',
+};
+
+function setMode(m,el) {
+  mode=m; document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
+  const desc = document.getElementById('mode-desc-text');
+  if(desc) desc.innerHTML = modeDescs[m] || '';
+  renderControls(); update();
+}
+function bind(id,key,fmt) {
+  const el=document.getElementById(id); if(!el)return;
+  el.addEventListener('input',()=>{
+    state[key]=parseFloat(el.value);
+    document.getElementById('v-'+id).textContent=fmt(state[key]);
+    updateBadges();
+    update();
+  });
+}
+function updateBadges() {
+  const b1=document.getElementById('badge-y1');
+  const b2=document.getElementById('badge-y2');
+  const b3=document.getElementById('badge-y3');
+  if(b1) b1.textContent='最初の'+state.y1+'年間';
+  if(b2) b2.textContent='次の'+state.y2+'年間';
+  if(b3) b3.textContent='次の'+state.y3+'年間';
+}
+function toggleAdvanced() {
+  const btn = document.getElementById('adv-toggle-btn');
+  const sec = document.getElementById('advanced-section');
+  if (!btn || !sec) return;
+  btn.classList.toggle('open');
+  sec.classList.toggle('open');
+  btn.setAttribute('aria-expanded', sec.classList.contains('open') ? 'true' : 'false');
+}
+
+function togglePhase(n) {
+  if(n===3 && !state.p2on) return;
+  state['p'+n+'on']=!state['p'+n+'on'];
+  if(n===2 && !state.p2on) state.p3on=false;
+  renderControls(); updateBadges(); update();
+}
+
+function renderControls() {
+  const c = document.getElementById('controls');
+  const fmtYen = v=>'¥'+Number(v).toLocaleString();
+  const fmtPct = v=>parseFloat(v).toFixed(1)+'%';
+  const fmtYr = v=>v+'年';
+  const fmtTarget = v=>v>=1e8?(v/1e8).toFixed(1)+'億円':Math.round(v/10000).toLocaleString()+'万円';
+  const p2=state.p2on, p3=state.p3on;
+
+  if (mode==='future') {
+    c.innerHTML = `
+      ${makeCtrl('rate','利回り（年率）　※インデックスファンドの目安：3〜7%',0.1,20,0.1,state.rate,fmtPct,'var(--mint)')}
+      <div class="phase-block">
+        <div class="phase-header"><span class="phase-badge p1">期間 1　<span id="badge-y1" style="font-weight:400;font-size:12px;">最初の10年間</span></span></div>
+        <p class="phase-hint">積立の基本期間です。毎月の金額と積立期間を設定してください。</p>
+        <div class="phase-body">
+          ${makeSubCtrl('m1','毎月の積立額',1000,200000,1000,state.m1,fmtYen)}
+          ${makeSubCtrl('y1','積立期間',1,40,1,state.y1,fmtYr)}
+        </div>
+      </div>
+      <button class="advanced-toggle-btn ${p2||p3?'open':''}" id="adv-toggle-btn" onclick="toggleAdvanced()" aria-expanded="${p2||p3?'true':'false'}">
+        ⚙️ 詳細設定（積立額を途中で変える場合）
+        <span class="adv-arrow">▼</span>
+      </button>
+      <div class="advanced-section ${p2||p3?'open':''}" id="advanced-section">
+      <div class="phase-block">
+        <div class="phase-header">
+          <span class="phase-badge p2">期間 2${p2 ? '　<span style=\"font-size:11px;opacity:0.7;\">次の' + state.y2 + '年間</span>' : ''}</span>
+          <div class="phase-toggle" onclick="togglePhase(2)">
+            <span class="toggle-label">${p2?'ON':'OFF'}</span>
+            <div class="toggle-track ${p2?'on':''}"></div>
+          </div>
+        </div>
+        <p class="phase-hint-toggle">💡 昇給・ライフイベントで積立額を増やしたい方向け</p>
+        <div class="phase-body ${p2?'':'hidden'}">
+          ${makeSubCtrl('m2','毎月の積立額',1000,200000,1000,state.m2,fmtYen,'var(--mint)')}
+          ${makeSubCtrl('y2','積立期間',1,40,1,state.y2,fmtYr,'var(--mint)')}
+        </div>
+      </div>
+      <div class="phase-block">
+        <div class="phase-header">
+          <span class="phase-badge p3">期間 3${p3 ? '　<span style=\"font-size:11px;opacity:0.7;\">次の' + state.y3 + '年間</span>' : ''}</span>
+          <div class="phase-toggle" ${p2?'onclick="togglePhase(3)"':''} style="${p2?'':' opacity:0.35;cursor:not-allowed;'}">
+            <span class="toggle-label">${p3?'ON':p2?'OFF':'—'}</span>
+            <div class="toggle-track ${p3?'on':''}"></div>
+          </div>
+        </div>
+        <p class="phase-hint-toggle">💡 さらに積立額を増やしたい時期がある方向け（例：子育て終了後）</p>
+        <div class="phase-body ${p3?'':'hidden'}">
+          ${makeSubCtrl('m3','毎月の積立額',1000,200000,1000,state.m3,fmtYen,'var(--gold)')}
+          ${makeSubCtrl('y3','積立期間',1,40,1,state.y3,fmtYr,'var(--gold)')}
+        </div>
+      </div>
+      </div>`;
+    bind('rate','rate',fmtPct);
+    bind('m1','m1',fmtYen); bind('y1','y1',fmtYr);
+    if(p2){bind('m2','m2',fmtYen);bind('y2','y2',fmtYr);}
+    if(p3){bind('m3','m3',fmtYen);bind('y3','y3',fmtYr);}
+  } else if (mode==='monthly') {
+    c.innerHTML = makeCtrl('target','目標金額',1000,100000000,1000,state.target,fmtTarget)+
+      makeCtrl('rate','利回り（年率）　※インデックスファンドの目安：3〜7%',0.1,20,0.1,state.rate,fmtPct,'var(--mint)')+
+      makeCtrl('years','積立期間',1,40,1,state.years,fmtYr,'var(--gold)');
+    bind('target','target',fmtTarget); bind('rate','rate',fmtPct); bind('years','years',fmtYr);
+  } else {
+    c.innerHTML = makeCtrl('monthly','毎月の積立額',1000,200000,1000,state.monthly,fmtYen)+
+      makeCtrl('rate','利回り（年率）　※インデックスファンドの目安：3〜7%',0.1,20,0.1,state.rate,fmtPct,'var(--mint)')+
+      makeCtrl('target','目標金額',1000,100000000,1000,state.target,fmtTarget);
+    bind('monthly','monthly',fmtYen); bind('rate','rate',fmtPct); bind('target','target',fmtTarget);
   }
-  return r; // 月率
 }
 
-// 将来価値（IRR方式・期首払い）
-// FV_future = FV_current*(1+r)^n + C*(1+r)*((1+r)^n-1)/r
-function futureValue(fvCurrent, monthly, rMonth, remainMonths) {
-  if (remainMonths === 0) return fvCurrent;
-  if (Math.abs(rMonth) < 1e-10) return fvCurrent + monthly * remainMonths;
-  const rn = Math.pow(1+rMonth, remainMonths);
-  return fvCurrent * rn + monthly * (1+rMonth) * (rn - 1) / rMonth;
+function calcMultiPhase() {
+  const phases=[{m:state.m1,y:state.y1}];
+  if(state.p2on)phases.push({m:state.m2,y:state.y2});
+  if(state.p3on)phases.push({m:state.m3,y:state.y3});
+  let fv=0,principal=0;
+  for(const ph of phases){const mo=ph.y*12;fv=growFV(fv,state.rate,mo)+monthlyFV(ph.m,state.rate,mo);principal+=ph.m*mo;}
+  return{fv,principal,phases};
 }
 
-// 金融庁方式（RATE逆算）
-function calcRATEAnnual(monthly, months, fv) {
-  let r = 0.01;
-  for (let iter = 0; iter < 2000; iter++) {
-    const rn = Math.pow(1+r, months);
-    const f  = monthly * (rn - 1) / r - fv;
-    const df = monthly * ((months * Math.pow(1+r, months-1) * r - (rn-1)) / (r*r));
-    if (Math.abs(df) < 1e-15) break;
-    const step = f / df;
-    r -= step;
-    if (r < 0) r = 1e-6;
-    if (Math.abs(step) < 1e-12) break;
-  }
-  return Math.pow(1+r, 12) - 1; // 年率
+let countUpTimer = null;
+function countUp(el, targetVal, isYen) {
+  if(countUpTimer) clearInterval(countUpTimer);
+  const start = 0, duration = 600, steps = 20;
+  const interval = duration / steps;
+  let step = 0;
+  countUpTimer = setInterval(() => {
+    step++;
+    const progress = step / steps;
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(targetVal * ease);
+    el.textContent = isYen ? fmtJPY(current) : fmtJPY(current);
+    if(step >= steps) { el.textContent = fmtJPY(targetVal); clearInterval(countUpTimer); }
+  }, interval);
 }
 
-function calc() {
-  const fvInput = parseFloat(document.getElementById('i-fv').value) || 0;
-  state.fv = fvInput;
-
-  const { monthly, months, fv, remain } = state;
-  const principal_past = monthly * months;
-
-  // IRR計算
-  if (fv <= 0 || monthly <= 0 || months <= 0) {
-    document.getElementById('v-irr').textContent = '—';
-    document.getElementById('fv-val').textContent = '—';
-    return;
-  }
-
-  const rMonth = calcIRR(monthly, months, fv);
-  const rAnnual = Math.pow(1+rMonth, 12) - 1;
-
-  document.getElementById('v-irr').textContent = (rAnnual*100).toFixed(2)+'%';
-  document.getElementById('irr-sub').textContent = `月率 ${(rMonth*100).toFixed(3)}% → 年率換算`;
-
-  // 金融庁方式との比較
-  const rFSA = calcRATEAnnual(monthly, months, fv);
-  document.getElementById('compare-row').style.display = 'flex';
-  document.getElementById('c-irr').textContent = (rAnnual*100).toFixed(2)+'%';
-  document.getElementById('c-fsa').textContent = (rFSA*100).toFixed(2)+'%';
-
-  // 将来価値
-  const fvFuture = futureValue(fv, monthly, rMonth, remain);
-  const principal_future = monthly * remain;
-  const total_principal = principal_past + principal_future;
-  const gain = fvFuture - total_principal;
-
-  document.getElementById('fv-val').textContent = fmtJPY(Math.round(fvFuture));
-  document.getElementById('fv-label').textContent = '将来の運用資産額（予測）';
-  document.getElementById('fv-sub').textContent =
-    `積立済${months}ヶ月 + 追加${remain}ヶ月 ／ IRR ${(rAnnual*100).toFixed(2)}%`;
-
-  // 内訳バー
-  const ratio = fvFuture > 0 ? Math.round(total_principal / fvFuture * 100) : 50;
-  document.getElementById('bar-p').style.width = ratio+'%';
-  document.getElementById('bar-g').style.width = (100-ratio)+'%';
-  document.getElementById('lbl-p').textContent = fmtShort(Math.round(total_principal));
-  document.getElementById('lbl-g').textContent = fmtShort(Math.max(0, Math.round(gain)));
-
-  // グラフ
-  buildChart(fv, monthly, rMonth, remain);
+function updateRatioBar(principal, fv) {
+  const ratio = fv > 0 ? Math.round(principal / fv * 100) : 50;
+  const gainRatio = 100 - ratio;
+  const bar = document.getElementById('ratio-bar');
+  const pl = document.getElementById('ratio-p-label');
+  const gl = document.getElementById('ratio-g-label');
+  if(bar) bar.style.width = ratio + '%';
+  if(pl) pl.textContent = '元本 ' + ratio + '%';
+  if(gl) gl.textContent = '運用収益 ' + gainRatio + '%';
 }
 
-function buildChart(fvNow, monthly, rMonth, remainMonths) {
-  const labels = [], d_p = [], d_g = [];
-  const totalYrs = Math.ceil(remainMonths / 12);
-  const maxPts = Math.min(totalYrs, 40);
+function updateAgeResult(totalYrs) {
+  const resEl = document.getElementById('age-result');
+  if(!resEl) return;
+  const age = state.age;
+  const goalAge = age + totalYrs;
+  resEl.innerHTML = `<span style="font-size:13px;color:var(--text3);font-weight:700;">今日始めると</span><br><span style="font-size:32px;font-weight:700;color:var(--coral);line-height:1.2;">${goalAge}<span style="font-size:18px;">歳</span></span><span style="font-size:22px;font-weight:700;color:var(--coral);">のときに達成！</span>`;
+}
 
-  for (let y = 1; y <= maxPts; y++) {
-    const mo = y * 12;
-    const fv = futureValue(fvNow, monthly, rMonth, Math.min(mo, remainMonths));
-    const p = state.monthly * state.months + monthly * Math.min(mo, remainMonths);
-    labels.push(y % 5 === 0 || y === 1 || y === maxPts ? y+'年' : '');
-    d_p.push(Math.round(p));
-    d_g.push(Math.max(0, Math.round(fv - p)));
-  }
-
-  if (chartInst) chartInst.destroy();
-  chartInst = new Chart(document.getElementById('mainChart'), {
-    type: 'bar',
-    data: { labels, datasets: [
-      { label: '元本', data: d_p, backgroundColor: '#5ba89a', stack: 'a' },
-      { label: '運用収益', data: d_g, backgroundColor: '#c9963a', stack: 'a' },
-    ]},
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: {
-        title: ctx => ctx[0].label ? ctx[0].label+'後' : '',
-        label: ctx => ctx.dataset.label+': '+fmtShort(ctx.raw),
-        footer: items => '合計: '+fmtShort(items.reduce((s,i)=>s+i.raw,0))
-      }}},
-      scales: {
-        x: { stacked:true, grid:{display:false}, ticks:{color:'#b09a9a',font:{size:10},autoSkip:false,maxRotation:0} },
-        y: { stacked:true, grid:{color:'rgba(180,120,100,0.08)'}, ticks:{color:'#b09a9a',font:{size:11},callback:v=>fmtShort(v)} }
-      }
-    }
+// 年齢スライダーのバインド（renderControls後に呼ぶ）
+function bindAgeSlider() {
+  const sl = document.getElementById('age-slider');
+  const vl = document.getElementById('v-age');
+  const il = document.getElementById('age-inline');
+  if (!sl) return;
+  sl.addEventListener('input', () => {
+    state.age = parseInt(sl.value);
+    if (vl) vl.textContent = state.age + '歳';
+    if (il) il.textContent = state.age + '歳';
+    update();
+    if (inheritOn) inheritFromSavings();
+    else { calcW1(); calcW2(); }
   });
 }
 
-function toggleAcc(btn) {
-  const content = btn.nextElementSibling;
-  const open = content.style.display === 'block';
-  content.style.display = open ? 'none' : 'block';
-  btn.textContent = (open ? '▶' : '▼') + btn.textContent.slice(1);
+function updateSavingMsg(monthly) {
+  const msg = document.getElementById('saving-msg');
+  if(!msg) return;
+  if(mode !== 'monthly') { msg.style.display = 'none'; return; }
+  const lunch = 900, coffee = 500, streaming = 1500;
+  let text = '';
+  if(monthly <= lunch) text = `ランチ1回分（約${lunch}円）の節約で達成できます`;
+  else if(monthly <= coffee * 3) text = `コーヒー${Math.ceil(monthly/coffee)}杯分の節約で達成できます`;
+  else if(monthly <= streaming * 2) text = `サブスク${Math.ceil(monthly/streaming)}本分の節約で達成できます`;
+  else if(monthly <= 5000) text = `1日あたり約${Math.round(monthly/30)}円の節約で達成できます`;
+  else text = `月${fmtShort(monthly)}円の積立で達成できます`;
+  msg.textContent = '💡 ' + text;
+  msg.style.display = 'block';
 }
 
-// 初期計算
-calc();
+let lastResultText = '';
+function shareX() {
+  const text = encodeURIComponent(lastResultText + '\n#あっきーのつみたてシミュレーター\nhttps://akkiemishima.github.io/dca-simulation/');
+  window.open('https://twitter.com/intent/tweet?text=' + text, '_blank');
+}
+function shareThreads() {
+  const text = encodeURIComponent(lastResultText + '\n#あっきーのつみたてシミュレーター\nhttps://akkiemishima.github.io/dca-simulation/');
+  window.open('https://www.threads.net/intent/post?text=' + text, '_blank');
+}
+function shareInsta() {
+  navigator.clipboard.writeText(lastResultText + '\n\n#あっきーのつみたてシミュレーター\nhttps://akkiemishima.github.io/dca-simulation/').then(() => {
+    const btn = document.querySelector('.share-insta');
+    if(btn) {
+      const orig = btn.textContent;
+      btn.textContent = 'コピー済み';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    }
+    alert('テキストをコピーしました。\nInstagramアプリを開いてストーリーに貼り付けてください。');
+  }).catch(() => {
+    alert('Instagramはアプリから投稿してください。\n\n' + lastResultText);
+  });
+}
+function copyResult() {
+  navigator.clipboard.writeText(lastResultText).then(() => {
+    const btn = document.getElementById('copy-btn');
+    if(btn) { btn.textContent = 'コピーしました！'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = '結果をコピー'; btn.classList.remove('copied'); }, 2000); }
+  });
+}
+function toggleFormula(btn) {
+  const body = document.getElementById('formula-body');
+  if(!body) return;
+  body.classList.toggle('open');
+  btn.textContent = body.classList.contains('open') ? '▼ 計算式を閉じる' : '▶ 計算式を見る（数学が好きな方へ）';
+}
+function toggleFormula2(btn) {
+  const body = document.getElementById('formula-body-2');
+  if(!body) return;
+  body.classList.toggle('open');
+  btn.textContent = body.classList.contains('open') ? '▼ 計算式を閉じる' : '▶ 計算式を見る（数学が好きな方へ）';
+}
 
-// 取り崩し初期化
-window.addEventListener('DOMContentLoaded', () => {
-  renderWControls();
+document.addEventListener('input', e => {
+  // age-slider は bindAgeSlider() で処理
 });
-// ========== 取り崩しシミュレーター ==========
+
+function update() {
+  const rvEl = document.getElementById('result-val');
+  if(mode==='future'){
+    const{fv,principal,phases}=calcMultiPhase();
+    const totalYrs=phases.reduce((s,p)=>s+p.y,0);
+    const yrsDetail=phases.map((p,i)=>p.y+'年').join(' ＋ ')+'＝'+totalYrs+'年';
+    document.getElementById('result-label').textContent='将来の運用資産額';
+    countUp(rvEl, fv, true);
+    document.getElementById('result-sub').textContent=`${yrsDetail}　利回り${state.rate}%`;
+    document.getElementById('b-principal').textContent=fmtJPY(principal);
+    document.getElementById('b-gain').textContent=fmtJPY(fv-principal);
+    const det=document.getElementById('b-principal-detail');
+    if(det){ if(phases.length>1){ det.innerHTML=phases.map((p,i)=>`期間${i+1}：${fmtShort(p.m*p.y*12)}万円`).join('<br>'); } else { det.innerHTML=''; } }
+    updateRatioBar(principal, fv);
+    updateAgeResult(totalYrs);
+    lastResultText = `あっきーのつみたてシミュレーター結果
+将来の運用資産額：${fmtJPY(fv)}
+（${yrsDetail} 利回り${state.rate}%）
+元本：${fmtJPY(principal)} / 運用収益：${fmtJPY(fv-principal)}`;
+    document.getElementById('saving-msg').style.display='none';
+    buildChartMulti(phases);
+    updateResultBanner(fv, state.age + totalYrs);
+    updateChartComment(principal, fv);
+  } else if(mode==='monthly'){
+    const mo=state.years*12,needed=solveMonthly(state.target,state.rate,mo);
+    document.getElementById('result-label').textContent='必要な月積立額';
+    rvEl.textContent='¥'+Math.round(needed).toLocaleString();
+    document.getElementById('result-sub').textContent=`目標${fmtShort(state.target)}・積立期間${state.years}年・利回り${state.rate}%`;
+    document.getElementById('b-principal').textContent=fmtJPY(needed*mo);
+    document.getElementById('b-gain').textContent=fmtJPY(state.target-needed*mo);
+    updateRatioBar(needed*mo, state.target);
+    updateAgeResult(state.years);
+    updateSavingMsg(needed);
+    lastResultText = `あっきーのつみたてシミュレーター結果
+目標${fmtShort(state.target)}円達成に必要な月積立額：¥${Math.round(needed).toLocaleString()}
+（積立期間${state.years}年・利回り${state.rate}%）`;
+    buildChartSingle(needed,state.rate,state.years);
+    updateResultBanner(state.target, state.age + state.years);
+    updateChartComment(needed*mo, state.target);
+  } else {
+    const mo=solveMonths(state.target,state.monthly,state.rate),yrs=mo/12;
+    document.getElementById('result-label').textContent='必要な積立期間';
+    rvEl.textContent=yrs.toFixed(1)+'年';
+    document.getElementById('result-sub').textContent=`目標${fmtShort(state.target)}・月${fmtShort(state.monthly)}・利回り${state.rate}%`;
+    document.getElementById('b-principal').textContent=fmtJPY(state.monthly*mo);
+    document.getElementById('b-gain').textContent=fmtJPY(state.target-state.monthly*mo);
+    updateRatioBar(state.monthly*mo, state.target);
+    updateAgeResult(Math.ceil(yrs));
+    lastResultText = `あっきーのつみたてシミュレーター結果
+目標${fmtShort(state.target)}円達成まで：${yrs.toFixed(1)}年
+（月${fmtShort(state.monthly)}円・利回り${state.rate}%）`;
+    document.getElementById('saving-msg').style.display='none';
+    const fvYears = monthlyFV(state.monthly, state.rate, mo);
+    buildChartSingle(state.monthly,state.rate,Math.ceil(yrs));
+    updateResultBanner(fvYears, state.age + Math.ceil(yrs));
+    updateChartComment(state.monthly*mo, fvYears);
+  }
+  // 連携ONの場合はリアルタイムで取り崩し側にも反映
+  if (typeof inheritOn !== 'undefined' && inheritOn) {
+    inheritFromSavings();
+  }
+}
+
+function drawChart(labels,d_p,d_g,dividers){
+  if(chartInst)chartInst.destroy();
+  const divPlugin = {
+    id:'dividers',
+    afterDraw(chart){
+      if(!dividers||dividers.length===0)return;
+      const{ctx,chartArea:{top,bottom},scales:{x}}=chart;
+      dividers.forEach(idx=>{
+        if(idx<0||idx>=labels.length)return;
+        const xPos=x.getPixelForValue(idx)+x.width/labels.length*0.5;
+        ctx.save();
+        ctx.strokeStyle='rgba(200,120,80,0.35)';
+        ctx.lineWidth=1.5;
+        ctx.setLineDash([4,3]);
+        ctx.beginPath(); ctx.moveTo(xPos,top); ctx.lineTo(xPos,bottom); ctx.stroke();
+        ctx.restore();
+      });
+    }
+  };
+  chartInst=new Chart(document.getElementById('mainChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'元本',data:d_p,backgroundColor:'#5ba89a',stack:'a'},
+      {label:'運用収益',data:d_g,backgroundColor:'#c9963a',stack:'a'},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:ctx=>ctx[0].label?ctx[0].label+'後':'',
+        label:ctx=>ctx.dataset.label+': '+fmtShort(ctx.raw),
+        footer:items=>'合計: '+fmtShort(items.reduce((s,i)=>s+i.raw,0))
+      }}},
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{color:'#b09a9a',font:{size:10},autoSkip:false,maxRotation:0}},
+        y:{stacked:true,grid:{color:'rgba(180,120,100,0.08)'},ticks:{color:'#b09a9a',font:{size:11},callback:v=>fmtShort(v)}}
+      }
+    },
+    plugins:[divPlugin]
+  });
+}
+
+function buildChartMulti(phases){
+  const labels=[],d_p=[],d_g=[],dividers=[];
+  let fv=0,principal=0,offset=0;
+  for(let pi=0;pi<phases.length;pi++){
+    const ph=phases[pi];
+    for(let y=1;y<=ph.y;y++){
+      const ay=offset+y,mo=y*12;
+      const pFV=growFV(fv,state.rate,mo)+monthlyFV(ph.m,state.rate,mo);
+      const pP=principal+ph.m*mo;
+      labels.push(ay%5===0||ay===1?ay+'年':'');
+      d_p.push(Math.round(pP)); d_g.push(Math.round(pFV-pP));
+    }
+    fv=growFV(fv,state.rate,ph.y*12)+monthlyFV(ph.m,state.rate,ph.y*12);
+    principal+=ph.m*ph.y*12; offset+=ph.y;
+    if(pi<phases.length-1) dividers.push(offset-1);
+  }
+  drawChart(labels,d_p,d_g,dividers);
+}
+
+function buildChartSingle(monthly,rate,yrs){
+  const labels=[],d_p=[],d_g=[];
+  const total=Math.min(yrs,40);
+  for(let y=1;y<=total;y++){
+    const mo=y*12,fv=monthlyFV(monthly,rate,mo),p=monthly*mo;
+    labels.push(y%5===0||y===1||y===total?y+'年':'');
+    d_p.push(Math.round(p)); d_g.push(Math.round(fv-p));
+  }
+  drawChart(labels,d_p,d_g);
+}
+
+/* ========== ウィザード ========== */
+const wDescs = {
+  1: '毎月いくら使うかを決めると、<strong>何歳まで引き出し可能か</strong>を計算します。',
+  2: '何歳まで使いたいかを決めると、<strong>毎月いくら使えるか</strong>を計算します。',
+  3: '毎月の引出額と期間を決めると、<strong>必要な運用利回り</strong>を計算します。',
+};
+
+let wizardAge = 25, wizardMonthly = null;
+let wizardIncYears = 10, wizardIncAmt = 50000;
+let wizardInc3Years = 10, wizardInc3Amt = 100000;
+let wizardDoIncrease = false, wizardDoIncrease2 = false;
+
+function wizardAgeSlide(val) {
+  wizardAge = parseInt(val);
+  const lbl = document.getElementById('wizard-age-val');
+  if (lbl) lbl.textContent = wizardAge + '歳';
+}
+
+function wizardIncYearsSlide(val) {
+  wizardIncYears = parseInt(val);
+  const lbl = document.getElementById('wizard-incyears-val');
+  if (lbl) lbl.textContent = wizardIncYears + '年後';
+}
+
+function wizardIncAmtSlide(val) {
+  wizardIncAmt = parseInt(val);
+  const lbl = document.getElementById('wizard-incamt-val');
+  if (lbl) lbl.textContent = '月' + (wizardIncAmt >= 10000 ? (wizardIncAmt/10000) + '万円' : wizardIncAmt.toLocaleString() + '円');
+  // 増額後の金額をデフォルトで3段階目に反映
+  const s3 = document.getElementById('wizard-inc3amt-slider');
+  const v3 = document.getElementById('wizard-inc3amt-val');
+  if (s3 && wizardInc3Amt <= wizardIncAmt) {
+    wizardInc3Amt = Math.min(200000, wizardIncAmt + 50000);
+    s3.value = wizardInc3Amt;
+    if (v3) v3.textContent = '月' + (wizardInc3Amt >= 10000 ? (wizardInc3Amt/10000) + '万円' : wizardInc3Amt.toLocaleString() + '円');
+  }
+}
+
+function wizardInc3YearsSlide(val) {
+  wizardInc3Years = parseInt(val);
+  const lbl = document.getElementById('wizard-inc3years-val');
+  if (lbl) lbl.textContent = wizardInc3Years + '年後';
+}
+
+function wizardInc3AmtSlide(val) {
+  wizardInc3Amt = parseInt(val);
+  const lbl = document.getElementById('wizard-inc3amt-val');
+  if (lbl) lbl.textContent = '月' + (wizardInc3Amt >= 10000 ? (wizardInc3Amt/10000) + '万円' : wizardInc3Amt.toLocaleString() + '円');
+}
+
+function wizardIncreaseSelect(val) {
+  wizardDoIncrease = (val === 'yes');
+  // ボタン選択表示
+  document.querySelectorAll('#wizard-increase-choice .wizard-choice').forEach(b => {
+    b.classList.toggle('selected', b.dataset.val === val);
+  });
+  const detail = document.getElementById('wizard-increase-detail');
+  if (detail) detail.style.display = wizardDoIncrease ? 'block' : 'none';
+  // 「さらに増やす？」ブロックを表示
+  if (wizardDoIncrease) {
+    const b2 = document.getElementById('wizard-inc2-block');
+    if (b2) b2.style.display = 'block';
+    // 増額後スライダーのデフォルトをwizardMonthlyより高く設定
+    if (wizardMonthly) {
+      const newAmt = Math.min(200000, wizardMonthly * 2);
+      wizardIncAmt = newAmt;
+      const sl = document.getElementById('wizard-incamt-slider');
+      const vl = document.getElementById('wizard-incamt-val');
+      if (sl) sl.value = newAmt;
+      if (vl) vl.textContent = '月' + (newAmt >= 10000 ? (newAmt/10000) + '万円' : newAmt.toLocaleString() + '円');
+    }
+    // 展開後に少し下にスクロール
+    setTimeout(() => {
+      const overlay = document.getElementById('wizard-overlay');
+      if (overlay) overlay.scrollTop = overlay.scrollHeight;
+    }, 100);
+  }
+  document.getElementById('wizard-next-2').disabled = false;
+}
+
+function wizardIncrease2Select(val) {
+  wizardDoIncrease2 = (val === 'yes2');
+  document.querySelectorAll('#wizard-increase2-choice .wizard-choice').forEach(b => {
+    b.classList.toggle('selected', b.dataset.val === val);
+  });
+  const d3 = document.getElementById('wizard-inc3-detail');
+  if (d3) d3.style.display = wizardDoIncrease2 ? 'block' : 'none';
+  // 展開後に下にスクロール
+  if (wizardDoIncrease2) {
+    setTimeout(() => {
+      const overlay = document.getElementById('wizard-overlay');
+      if (overlay) overlay.scrollTop = overlay.scrollHeight;
+    }, 100);
+  }
+}
+
+function wizardSelect(el, type) {
+  const parent = el.closest('.wizard-choices') || el.parentElement;
+  parent.querySelectorAll('.wizard-choice').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  if (type === 'monthly') {
+    wizardMonthly = parseInt(el.dataset.val);
+    document.getElementById('wizard-next-1').disabled = false;
+  }
+}
+
+function wizardNext(step) {
+  document.getElementById('wstep-'+step).classList.remove('active');
+  document.getElementById('wstep-'+(step+1)).classList.add('active');
+  document.getElementById('wd'+step).classList.add('done');
+  // step1→step2へ移るとき増額スライダーの初期値を積立額に合わせる
+  if (step === 1 && wizardMonthly) {
+    const newAmt = Math.min(200000, wizardMonthly * 2);
+    wizardIncAmt = newAmt;
+    const sl = document.getElementById('wizard-incamt-slider');
+    const vl = document.getElementById('wizard-incamt-val');
+    if (sl) sl.value = newAmt;
+    if (vl) vl.textContent = '月' + (newAmt >= 10000 ? (newAmt/10000) + '万円' : newAmt.toLocaleString() + '円');
+    wizardInc3Amt = Math.min(200000, newAmt + 50000);
+    const s3 = document.getElementById('wizard-inc3amt-slider');
+    const v3 = document.getElementById('wizard-inc3amt-val');
+    if (s3) s3.value = wizardInc3Amt;
+    if (v3) v3.textContent = '月' + (wizardInc3Amt >= 10000 ? (wizardInc3Amt/10000) + '万円' : wizardInc3Amt.toLocaleString() + '円');
+  }
+}
+
+function wizardFinish() {
+  document.getElementById('wd1').classList.add('done');
+  document.getElementById('wd2').classList.add('done');
+  document.getElementById('wizard-overlay').style.display = 'none';
+
+  // 年齢を state に反映
+  const sliderVal = document.getElementById('wizard-age-slider');
+  if (sliderVal) wizardAge = parseInt(sliderVal.value);
+  state.age = wizardAge;
+  const sl = document.getElementById('age-slider');
+  const vl = document.getElementById('v-age');
+  const il = document.getElementById('age-inline');
+  if (sl) sl.value = wizardAge;
+  if (vl) vl.textContent = wizardAge + '歳';
+  if (il) il.textContent = wizardAge + '歳';
+
+  // 積立パラメーターをセット
+  state.rate = 5.0;
+  state.y1 = wizardDoIncrease ? wizardIncYears : 20; // 増額する場合は「増額までの期間」が期間1
+  state.years = 20;
+  state.target = 20000000;
+
+  const monthly = wizardMonthly || 50000;
+  state.m1 = monthly;
+  state.monthly = monthly;
+
+  // 期間2（増額する場合）
+  if (wizardDoIncrease) {
+    state.p2on = true;
+    state.m2 = wizardIncAmt;
+    state.y2 = wizardDoIncrease2 ? wizardInc3Years : 20; // 3段階目がある場合は期間2の長さ＝3段階目までの年数
+    // 期間3（さらに増額する場合）
+    if (wizardDoIncrease2) {
+      state.p3on = true;
+      state.m3 = wizardInc3Amt;
+      state.y3 = 20;
+    } else {
+      state.p3on = false;
+    }
+  } else {
+    state.p2on = false;
+    state.p3on = false;
+    state.y1 = 20;
+  }
+
+  // モードを「将来いくら？」に切り替え
+  mode = 'future';
+  document.querySelectorAll('.mode-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === 1);
+  });
+  const descEl = document.getElementById('mode-desc-text');
+  if (descEl && typeof modeDescs !== 'undefined') descEl.innerHTML = modeDescs['future'];
+
+  renderControls(); update();
+  bindAgeSlider();
+  if (typeof renderWControls === 'function') renderWControls();
+  // 連携を自動でONに
+  if (!inheritOn) toggleInherit();
+  // 積立シミュレーターまでスクロール
+  setTimeout(() => {
+    document.querySelector('.mode-tabs')?.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 200);
+}
+
+function skipWizard() {
+  document.getElementById('wizard-overlay').style.display = 'none';
+}
+
+/* ========== 取り崩しシミュレーター ========== */
+
+/* ========== 取り崩しシミュレーター（スライダー版）========== */
+
 const wState = {
+  // ① いつゼロ？
   w1_principal: 10000000, w1_rate: 3, w1_withdraw: 50000,
+  // ② 毎月いくら？
   w2_principal: 10000000, w2_rate: 3, w2_years: 20,
+  // ③ 何%必要？
   w3_principal: 10000000, w3_withdraw: 50000, w3_years: 20,
 };
+
 let wMode = 1;
-const wDescs = {
-  1: '毎月いくら使うかを決めると、<strong>何歳まで資金が持つか</strong>を計算します。',
-  2: '引き出し期間を決めると、<strong>毎月いくら使えるか</strong>を計算します。',
-  3: '毎月の引出額と期間を決めると、<strong>必要な利回り</strong>を計算します。',
-};
+
 function setWMode(n) {
   wMode = n;
   [1,2,3].forEach(i => {
@@ -887,6 +1769,8 @@ function setWMode(n) {
   const desc = document.getElementById('w-desc-text');
   if (desc) desc.innerHTML = wDescs[n] || '';
 }
+
+// 万・億フォーマット（スライダーラベル用）
 function fmtPrincipal(v) {
   if (v >= 1e8) return (v/1e8).toFixed(0)+'億円';
   return (v/10000).toLocaleString()+'万円';
@@ -897,6 +1781,7 @@ function fmtWithdraw(v) {
 }
 function fmtPct(v) { return parseFloat(v).toFixed(1)+'%'; }
 function fmtYr(v) { return v+'年'; }
+
 function makeWCtrl(id, label, min, max, step, val, fmt, color) {
   const vc = color || 'var(--mint)';
   const vbg = color === 'var(--coral)' ? 'var(--coral-pale)' : color === 'var(--gold)' ? 'var(--gold-pale)' : 'var(--mint-pale)';
@@ -912,6 +1797,7 @@ function makeWCtrl(id, label, min, max, step, val, fmt, color) {
     </div>
   </div>`;
 }
+
 function bindWSlider(id, key, fmt, calcFn) {
   const el = document.getElementById('ws-'+id);
   if (!el) return;
@@ -921,55 +1807,168 @@ function bindWSlider(id, key, fmt, calcFn) {
     calcFn();
   });
 }
+
 function renderWControls() {
+  // ① いつゼロ？
   const c1 = document.getElementById('wcontrols-1');
   if (c1) {
     c1.innerHTML =
-      makeWCtrl('w1p','今ある資金', 1000, 300000000, 1000, wState.w1_principal, fmtPrincipal, 'var(--coral)') +
+      makeWCtrl('w1p','今ある資金', 10000, 150000000, 10000, wState.w1_principal, fmtPrincipal, 'var(--coral)') +
       makeWCtrl('w1r','利回り（年率）', 0, 15, 0.1, wState.w1_rate, fmtPct) +
       makeWCtrl('w1w','毎月の引出額', 1000, 500000, 1000, wState.w1_withdraw, fmtWithdraw, 'var(--gold)');
     bindWSlider('w1p','w1_principal',fmtPrincipal,calcW1);
     bindWSlider('w1r','w1_rate',fmtPct,calcW1);
     bindWSlider('w1w','w1_withdraw',fmtWithdraw,calcW1);
   }
+  // ② 毎月いくら？
   const c2 = document.getElementById('wcontrols-2');
   if (c2) {
     c2.innerHTML =
-      makeWCtrl('w2p','今ある資金', 1000, 300000000, 1000, wState.w2_principal, fmtPrincipal, 'var(--coral)') +
+      makeWCtrl('w2p','今ある資金', 10000, 150000000, 10000, wState.w2_principal, fmtPrincipal, 'var(--coral)') +
       makeWCtrl('w2r','利回り（年率）', 0, 15, 0.1, wState.w2_rate, fmtPct) +
       makeWCtrl('w2y','取り崩し期間', 1, 50, 1, wState.w2_years, fmtYr, 'var(--gold)');
     bindWSlider('w2p','w2_principal',fmtPrincipal,calcW2);
     bindWSlider('w2r','w2_rate',fmtPct,calcW2);
     bindWSlider('w2y','w2_years',fmtYr,calcW2);
   }
+  // ③ 何%必要？
   const c3 = document.getElementById('wcontrols-3');
   if (c3) {
     c3.innerHTML =
-      makeWCtrl('w3p','今ある資金', 1000, 300000000, 1000, wState.w3_principal, fmtPrincipal, 'var(--coral)') +
+      makeWCtrl('w3p','今ある資金', 10000, 150000000, 10000, wState.w3_principal, fmtPrincipal, 'var(--coral)') +
       makeWCtrl('w3w','毎月の引出額', 1000, 500000, 1000, wState.w3_withdraw, fmtWithdraw, 'var(--gold)') +
       makeWCtrl('w3y','取り崩し期間', 1, 50, 1, wState.w3_years, fmtYr);
     bindWSlider('w3p','w3_principal',fmtPrincipal,calcW3);
     bindWSlider('w3w','w3_withdraw',fmtWithdraw,calcW3);
     bindWSlider('w3y','w3_years',fmtYr,calcW3);
   }
+  bindAgeSlider();
   calcW1(); calcW2(); calcW3();
 }
+
+// 積立結果を引き継ぐトグル
+let inheritOn = false;
+
+function toggleInherit() {
+  inheritOn = !inheritOn;
+  const track = document.getElementById('inherit-track');
+  const label = document.getElementById('inherit-toggle-label');
+  const info  = document.getElementById('inherit-info');
+  if (track)  track.classList.toggle('on', inheritOn);
+  if (label)  label.textContent = inheritOn ? 'ON' : 'OFF';
+  const offHint = document.getElementById('inherit-off-hint');
+
+  if (inheritOn) {
+    if (offHint) offHint.style.display = 'none';
+    inheritFromSavings();
+  } else {
+    // 元に戻す（デフォルト値へ）
+    wState.w1_principal = 10000000;
+    wState.w2_principal = 10000000;
+    wState.w3_principal = 10000000;
+    ['ws-w1p','ws-w2p','ws-w3p'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = 10000000;
+    });
+    ['wv-w1p','wv-w2p','wv-w3p'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = fmtPrincipal(10000000);
+    });
+    if (info) info.style.display = 'none';
+    if (offHint) offHint.style.display = 'block';
+    calcW1(); calcW2(); calcW3();
+  }
+}
+
+function inheritFromSavings() {
+  let fv = 0;
+  if (mode === 'future') {
+    fv = calcMultiPhase().fv;
+  } else {
+    fv = state.target;
+  }
+  const MAX_SLIDER = 150000000;
+  const rounded = Math.round(fv / 10000) * 10000;
+  // 将来価値が上限超なら上限を拡張
+  const actualVal = rounded;
+  const sliderMax = fv > MAX_SLIDER ? Math.ceil(fv / 10000000) * 10000000 : MAX_SLIDER;
+  ['ws-w1p','ws-w2p','ws-w3p'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.max = sliderMax; el.step = 10000; }
+  });
+  const clamped = Math.max(10000, actualVal);
+  // 毎月引き出し額 = 将来価値の年5%÷12
+  const withdraw5pct = Math.max(10000, Math.round(fv * 0.05 / 12 / 10000) * 10000);
+
+  wState.w1_principal = clamped;
+  wState.w2_principal = clamped;
+  wState.w3_principal = clamped;
+  wState.w1_withdraw = withdraw5pct;
+  wState.w3_withdraw = withdraw5pct;
+
+  ['ws-w1p','ws-w2p','ws-w3p'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = clamped;
+  });
+  ['wv-w1p','wv-w2p','wv-w3p'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = fmtPrincipal(clamped);
+  });
+
+  let savingsYrs = 0;
+  if (mode === 'future') {
+    savingsYrs = calcMultiPhase().phases.reduce((s,p)=>s+p.y,0);
+  } else {
+    savingsYrs = state.years;
+  }
+  const startAge = state.age + savingsYrs;
+
+  const infoEl = document.getElementById('inherit-info');
+  if (infoEl) {
+    infoEl.style.display = 'block';
+    infoEl.innerHTML = `<div style="font-size:15px;font-weight:700;color:var(--mint);">✅ ${startAge}歳時点での積立結果 ${fmtJPY(Math.round(fv))} を引き継ぎました</div><div style="font-size:11px;color:var(--text2);margin-top:3px;">積立結果を引き継ぐ</div>`;
+  }
+
+  calcW1(); calcW2(); calcW3();
+}
+
+// 取り崩し開始年齢を返す（積立完了後）
+function getWithdrawStartAge() {
+  let savingsYrs = 0;
+  if (mode === 'future') {
+    try { savingsYrs = calcMultiPhase().phases.reduce((s,p)=>s+p.y,0); } catch(e) {}
+  } else if (mode === 'monthly') {
+    savingsYrs = state.years;
+  } else {
+    // yearsモード: 実際の積立期間を再計算
+    try { savingsYrs = Math.ceil(solveMonths(state.target, state.monthly, state.rate) / 12); } catch(e) { savingsYrs = 0; }
+  }
+  const infoEl = document.getElementById('inherit-info');
+  const isInherited = infoEl && infoEl.style.display !== 'none';
+  return isInherited ? state.age + savingsYrs : state.age;
+}
+
+// ① いつゼロ？
 function calcW1() {
-  const principal = wState.w1_principal, rate = wState.w1_rate, withdraw = wState.w1_withdraw;
+  const principal = wState.w1_principal;
+  const rate = wState.w1_rate;
+  const withdraw = wState.w1_withdraw;
   const valEl = document.getElementById('w1-val');
   const subEl = document.getElementById('w1-sub');
   const ageEl = document.getElementById('w1-age');
   if (!valEl) return;
+
   if (rate > 0) {
     const r = Math.pow(1 + rate/100, 1/12) - 1;
-    if (withdraw <= principal * r) {
+    const monthlyInterest = principal * r;
+    if (withdraw <= monthlyInterest) {
       valEl.textContent = '永続的に続きます';
-      subEl.textContent = `月利息 約${fmtJPY(Math.round(principal*r))} ≥ 引出額のため元本が減りません`;
+      subEl.textContent = `月利息 約${fmtJPY(Math.round(monthlyInterest))} ≥ 引出額のため元本が減りません`;
       if (ageEl) ageEl.textContent = '';
-      buildWithdrawChart(principal, rate, withdraw, 600);
       return;
     }
   }
+  // IRR方式：月率換算は同じ式、取り崩しは期末払い（月末に引き出し）のためIRR方式でも同一
   const r = rate === 0 ? 0 : Math.pow(1 + rate/100, 1/12) - 1;
   let bal = principal, totalMonths = 0;
   for (let m = 1; m <= 1200; m++) {
@@ -977,84 +1976,179 @@ function calcW1() {
     if (bal <= 0) { totalMonths = m; break; }
   }
   if (totalMonths === 0) {
-    valEl.textContent = '100年以上'; subEl.textContent = '計算上、100年を超えても資金が残ります。';
+    valEl.textContent = '100年以上';
+    subEl.textContent = '計算上、100年を超えても資金が残ります。';
     if (ageEl) ageEl.textContent = '';
-    buildWithdrawChart(principal, rate, withdraw, 600); return;
+    buildWithdrawChart(principal, rate, withdraw, 600);
+    return;
   }
-  const yrs = Math.floor((totalMonths-1)/12), mos = (totalMonths-1) % 12;
+  const yrs = Math.floor((totalMonths-1)/12);
+  const mos = (totalMonths-1) % 12;
   valEl.textContent = yrs > 0 ? (mos > 0 ? `${yrs}年 ${mos}ヶ月` : `${yrs}年`) : `${mos}ヶ月`;
   subEl.textContent = `初期資金 ${fmtJPY(principal)} ／ 利回り ${rate}% ／ 毎月 ${fmtJPY(withdraw)} 引出し`;
-  if (ageEl) ageEl.textContent = '';
+  if (ageEl) {
+    const startAge = getWithdrawStartAge();
+    const endAge = startAge + yrs;
+    const mosStr = mos > 0 ? `${mos}ヶ月` : '';
+    ageEl.innerHTML = `${endAge}歳${mosStr}まで引き出し可能 <span style="font-size:0.72em;opacity:0.85;">（${startAge}歳から${yrs}年${mosStr}後）</span>`;
+  }
   buildWithdrawChart(principal, rate, withdraw, totalMonths);
 }
+
+// ② 毎月いくら？
 function calcW2() {
-  const principal = wState.w2_principal, rate = wState.w2_rate, n = wState.w2_years * 12;
+  const principal = wState.w2_principal;
+  const rate = wState.w2_rate;
+  const n = wState.w2_years * 12;
   const valEl = document.getElementById('w2-val');
   const subEl = document.getElementById('w2-sub');
+  const ageEl = document.getElementById('w2-age');
   if (!valEl) return;
-  const monthly = rate === 0 ? principal / n :
-    principal * (Math.pow(1+rate/100,1/12)-1) / (1 - Math.pow(1+(Math.pow(1+rate/100,1/12)-1), -n));
+  let monthly;
+  if (rate === 0) {
+    monthly = principal / n;
+  } else {
+    const r = Math.pow(1 + rate/100, 1/12) - 1;
+    monthly = principal * r / (1 - Math.pow(1 + r, -n));
+  }
   valEl.textContent = fmtJPY(Math.round(monthly));
   subEl.textContent = `初期資金 ${fmtJPY(principal)} ／ 利回り ${rate}% ／ 引出期間${wState.w2_years}年間`;
+  if (ageEl) {
+    const startAge = getWithdrawStartAge();
+    const endAge = startAge + wState.w2_years;
+    ageEl.innerHTML = `${endAge}歳まで引き出し可能です <span style="font-size:0.72em;opacity:0.85;">（${startAge}歳から${wState.w2_years}年後）</span>`;
+  }
   buildWithdrawChart(principal, rate, Math.round(monthly), n);
 }
+
+// ③ 何%必要？
 function calcW3() {
-  const principal = wState.w3_principal, withdraw = wState.w3_withdraw, n = wState.w3_years * 12;
+  const principal = wState.w3_principal;
+  const withdraw = wState.w3_withdraw;
+  const n = wState.w3_years * 12;
   const valEl = document.getElementById('w3-val');
   const subEl = document.getElementById('w3-sub');
   if (!valEl) return;
-  function balAt(ar) {
-    const r = ar === 0 ? 0 : Math.pow(1+ar/100,1/12)-1;
+
+  function balanceAt(annualRate) {
+    const r = annualRate === 0 ? 0 : Math.pow(1 + annualRate/100, 1/12) - 1;
     let bal = principal;
-    for (let m = 0; m < n; m++) bal = bal*(1+r) - withdraw;
+    for (let m = 0; m < n; m++) { bal = bal * (1 + r) - withdraw; }
     return bal;
   }
-  if (balAt(0) >= 0) { valEl.textContent = '利回り 0% で OK'; subEl.textContent = `元本だけで${wState.w3_years}年間賄えます。`; buildWithdrawChart(principal,0,withdraw,n); return; }
-  if (balAt(50) < 0) { valEl.textContent = '50%超が必要'; subEl.textContent = '引出額または期間の見直しをご検討ください。'; buildWithdrawChart(principal,0,withdraw,n); return; }
-  let lo=0, hi=50;
-  for (let i=0;i<80;i++) { const mid=(lo+hi)/2; balAt(mid)<0?lo=mid:hi=mid; }
-  const nr=(lo+hi)/2;
-  valEl.textContent = `利回り ${nr.toFixed(2)}%`;
+
+  if (balanceAt(0) >= 0) {
+    valEl.textContent = '利回り 0% で OK';
+    subEl.textContent = `利息なしでも初期資金だけで引出期間${wState.w3_years}年間の引き出しを賄えます。`;
+    buildWithdrawChart(principal, 0, withdraw, n);
+    return;
+  }
+  if (balanceAt(50) < 0) {
+    valEl.textContent = '50%超が必要';
+    subEl.textContent = '引出額または期間の見直しをご検討ください。';
+    buildWithdrawChart(principal, 0, withdraw, n);
+    return;
+  }
+  let lo = 0, hi = 50;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    balanceAt(mid) < 0 ? lo = mid : hi = mid;
+  }
+  const neededRate = (lo + hi) / 2;
+  valEl.textContent = `利回り ${neededRate.toFixed(2)}%`;
   subEl.textContent = `初期資金 ${fmtJPY(principal)} ／ 毎月 ${fmtJPY(withdraw)} ／ 引出期間${wState.w3_years}年間`;
-  buildWithdrawChart(principal, nr, withdraw, n);
+  buildWithdrawChart(principal, neededRate, withdraw, n);
 }
+
+// 引き出しグラフ
 let withdrawChartInst = null;
 function buildWithdrawChart(principal, annualRate, withdraw, totalMonths) {
   const canvas = document.getElementById('withdrawChart');
   if (!canvas) return;
   const dispMonths = Math.min(Math.max(totalMonths, 12), 600);
   const step = Math.max(1, Math.floor(dispMonths / 60));
-  const r = annualRate === 0 ? 0 : Math.pow(1 + annualRate/100, 1/12) - 1;
-  const labels = [], d_bal = [], d_used = [];
-  let bal = principal, used = 0;
-  for (let m = 1; m <= dispMonths; m += step) {
-    for (let s = 0; s < step && m+s <= dispMonths; s++) {
-      bal = Math.max(0, bal*(1+r) - withdraw);
-      used += withdraw;
+  const r = annualRate === 0 ? 0 : Math.pow(1 + annualRate / 100, 1 / 12) - 1;
+  const startAge = getWithdrawStartAge();
+  const labels = [], d_bal = [], d_cum = [];
+  let bal = principal, cum = 0, depleted = false;
+  for (let m = step; m <= dispMonths; m += step) {
+    for (let s = 0; s < step; s++) {
+      if (depleted) break;
+      const next = bal * (1 + r) - withdraw;
+      if (next <= 0) {
+        cum += Math.max(0, bal * (1 + r)); // 実際に引き出せた最後の金額
+        bal = 0; depleted = true;
+      } else {
+        bal = next; cum += withdraw;
+      }
     }
-    labels.push(Math.floor(m/12)+'年');
+    const yr = Math.round(m / 12);
+    labels.push(yr % 5 === 0 || yr === 0 ? (startAge + yr) + '歳' : '');
     d_bal.push(Math.round(bal));
-    d_used.push(Math.round(used));
+    d_cum.push(Math.round(cum));
   }
   if (withdrawChartInst) withdrawChartInst.destroy();
   withdrawChartInst = new Chart(canvas, {
     type: 'bar',
     data: { labels, datasets: [
-      { label:'残っているお金', data:d_bal, backgroundColor:'#5ba89a', stack:'a' },
-      { label:'使ったお金（累計）', data:d_used, backgroundColor:'#e8816a', stack:'a' },
+      { label: '残高', data: d_bal, backgroundColor: '#5ba89a', stack: 'a' },
+      { label: '引出額（累計）', data: d_cum, backgroundColor: 'rgba(232,129,106,0.5)', stack: 'b' },
     ]},
     options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{ callbacks:{
-        footer: items => '合計: '+fmtShort(items.reduce((s,i)=>s+i.raw,0))
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        title: ctx => ctx[0].label || '',
+        label: ctx => ctx.dataset.label + ': ' + fmtShort(ctx.raw),
       }}},
-      scales:{
-        x:{ stacked:true, grid:{display:false}, ticks:{color:'#b09a9a',font:{size:10}} },
-        y:{ stacked:true, grid:{color:'rgba(180,120,100,0.08)'}, ticks:{color:'#b09a9a',font:{size:11},callback:v=>fmtShort(v)} }
+      scales: {
+        x: { stacked: false, grid: { display: false }, ticks: { color: '#b09a9a', font: { size: 10 }, autoSkip: false, maxRotation: 0 }},
+        y: { grid: { color: 'rgba(180,120,100,0.08)' }, ticks: { color: '#b09a9a', font: { size: 11 }, callback: v => fmtShort(v) }}
       }
     }
   });
 }
+
+// パスワード解除後に取り崩しコントロールも初期化（checkPwで直接呼ぶため不要）
+
+// 結果サマリーバナー更新
+function updateResultBanner(fvAmount, goalAge) {
+  const banner = document.getElementById('result-banner');
+  const text = document.getElementById('result-banner-text');
+  if (!banner || !text) return;
+  banner.classList.add('show');
+  text.innerHTML = `今日から積み立てると、<strong id="banner-age">${goalAge}歳</strong>で<strong id="banner-amount">${fmtJPY(Math.round(fvAmount))}</strong>に！`;
+}
+
+// グラフコメント（複利の力を伝える）
+function updateChartComment(principal, fv) {
+  const el = document.getElementById('chart-comment');
+  if (!el || fv <= 0) return;
+  const gainRatio = Math.round((fv - principal) / fv * 100);
+  const gainAmt = fmtJPY(Math.round(fv - principal));
+  if (gainRatio > 0) {
+    el.textContent = `✨ 実際に積み立てるのは ${fmtJPY(Math.round(principal))} だけ。残りの ${gainAmt}（${gainRatio}%）は運用で増えたお金です！`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ページ読み込み時に自動初期化
+window.addEventListener('DOMContentLoaded', () => {
+  // パスワード画面を表示
+  document.getElementById('pw-overlay').style.display = 'flex';
+
+  // 「将来いくら？」モードで初期化
+  mode = 'future';
+  document.querySelectorAll('.mode-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === 1);
+  });
+  const descEl = document.getElementById('mode-desc-text');
+  if (descEl && typeof modeDescs !== 'undefined') descEl.innerHTML = modeDescs['future'];
+  renderControls(); update();
+  bindAgeSlider();
+  if (typeof renderWControls === 'function') renderWControls();
+});
 
 </script>
 </body>
